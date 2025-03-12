@@ -3,7 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const User = require('./models/User');
+const { MongoClient } = require('mongodb');
+const { setApp } = require('./api'); // Import the setApp function from api.js
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,13 +14,14 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI);
+MongoClient.connect(process.env.MONGODB_URI)
+  .then(client => {
+    // Initialize API routes
+    setApp(app, client);
 
-//app.use('/api', apiRouter);
-
-
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+    // Start the server
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch(error => console.error(error));
