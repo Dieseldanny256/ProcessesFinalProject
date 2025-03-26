@@ -41,9 +41,9 @@ function Login()
             {method:'POST',body:js,headers:{'Content-Type':'application/json'}});
             var res = JSON.parse(await response.text());
 
-            if( res.id <= 0 )
+            if( res.error != "" )
             {
-                setMessage('User/Password combination incorrect');
+                setMessage(res.error);
             }
             else
             {
@@ -51,6 +51,7 @@ function Login()
                 localStorage.setItem('user_data', JSON.stringify(user));
                 setMessage('');
                 window.location.href = '/cards';
+                console.log("Correct password given!");
             }
         }
         catch(error:any)
