@@ -9,9 +9,9 @@ const { setApp } = require('./api'); // Import the setApp function from api.js
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
 // Middleware
 app.use(express.json());
+app.use(cors());
 
 // Connect to MongoDB
 MongoClient.connect(process.env.MONGODB_URI)
