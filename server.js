@@ -6,6 +6,10 @@ const cors = require('cors');
 const { MongoClient } = require('mongodb');
 const { setApp } = require('./api'); // Import the setApp function from api.js
 
+// Importing the routes
+const exerciseRoutes = require('./routes/exerciseRoutes');
+const workoutRoutes = require('./routes/workoutRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -25,3 +29,7 @@ MongoClient.connect(process.env.MONGODB_URI)
     });
   })
   .catch(error => console.error(error));
+
+// Define routes
+app.use('/api/exercises', exerciseRoutes);
+app.use('/api/workouts', workoutRoutes);
