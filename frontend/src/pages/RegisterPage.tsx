@@ -1,8 +1,8 @@
 import PageTitle from '../components/Images/PageTitleImg.tsx';
-import Login from '../components/Login/LoginComp.tsx';
 import BackGround from '../components/Images/BackGroundImg.tsx';
-import LoginBox from '../components/Login/LoginBox.tsx';
 import BuffMan from '../components/Images/BuffManImg.tsx';
+import RegisterBox from '../components/Register/RegisterBox.tsx';
+import Register from '../components/Register/RegisterComp.tsx';
 
 const LoginPage = () =>
 {
@@ -12,9 +12,9 @@ const LoginPage = () =>
       <div>
         <BackGround />
           <PageTitle />
-          <LoginBox> 
-            <Login />
-          </LoginBox>
+          <RegisterBox> 
+            <Register />
+          </RegisterBox>
           <BuffMan />
       </div>
     );

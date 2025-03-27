@@ -1,3 +1,11 @@
+:root
+{
+    --background-color:#BA0000;
+    --secondary-color:#ffffff;
+    --text-color:#000000;
+    --accent-color-1:#FFB202;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +47,60 @@
 
 .read-the-docs {
   color: #888;
+}
+
+.headerText {
+  color: black;
+  font-family: "microgramma-extended", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 5vw;
+  letter-spacing: 5px;
+  margin-top: 10px;
+  margin-bottom: -40px;
+  margin-left: -17vw;
+}
+
+.headerText2 {
+  color: black;
+  font-family: "microgramma-extended", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 5vw;
+  letter-spacing: 5px;
+  margin-top: -5px;
+  margin-bottom: -60px;
+  margin-left: -5vw;
+}
+
+.headerText3 {
+  color: black;
+  font-family: "microgramma-extended", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 5vw;
+  letter-spacing: 5px;
+  margin-top: 10px;
+  margin-bottom: -60px;
+  margin-left: -5vw;
+  line-height: 50px;
+}
+
+.bodyText {
+  color: rgb(255, 255, 255);
+  font-family: "purista-web", sans-serif;
+  font-weight: 600;
+  font-style: italic;
+  font-size: 2vw;
+  letter-spacing: 2px;
+
+}
+
+.button {
+  color: black;
+  font-family: "purista-web", sans-serif;
+  font-weight: 1000;
+  font-style: italic;
+  font-size: 3vw;
+
 }
