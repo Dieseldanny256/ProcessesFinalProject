@@ -9,7 +9,7 @@ const Verify: React.FC = () => {
   const userId = location.state?.userId;
   // Hooks
   const [verificationCode, setVerificationCode] = useState('');
-  const [error, setError] = useState('');
+  //const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   // Redirect if userId is missing (causes the header and box to not apear somtimes)
@@ -21,7 +21,7 @@ const Verify: React.FC = () => {
   const doVerify = async (e: React.FormEvent) => {
 
     e.preventDefault();
-    setError('');
+    //setError('');
     setSuccessMessage('');
 
     try {
@@ -45,10 +45,10 @@ const Verify: React.FC = () => {
         setSuccessMessage('Email verified successfully!');
         setTimeout(() => navigate('/login'), 2000);
       } else {
-        setError('Invalid verification code.');
+        //setError('Invalid verification code.');
       }
     } catch (err: any) {
-      setError(err.message || 'Something went wrong, please try again.');
+      //setError(err.message || 'Something went wrong, please try again.');
     }
   };
       

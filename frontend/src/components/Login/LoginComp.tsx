@@ -1,56 +1,67 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
   // Hooks
-  const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-  const navigate = useNavigate();
+  const [message,setMessage] = useState('');
+  const [loginName,setLoginName] = React.useState('');
+  const [loginPassword,setPassword] = React.useState('');
+  
+  const app_name = 'powerleveling.xyz';
+  function buildPath(route:string) : string
+  {
+    if (process.env.NODE_ENV != 'development')
+    {
+    return 'http://' + app_name + ':5000/' + route;
+    }
+    else
+    {
+    return 'http://localhost:5000/' + route;
+    }
+  }
 
   // Handle Login
-  const doLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function doLogin(event:any) : Promise<void>
+  {
+      event.preventDefault();
+      var obj = {login:loginName,password:loginPassword};
+      var js = JSON.stringify(obj);
+      try
+      {
+          //Get the API response
+          const response = await fetch(buildPath('api/login'),
+          {method:'POST',body:js,headers:{'Content-Type':'application/json'}});
+          var res = JSON.parse(await response.text());
 
-    setError('');
-
-    try {
-      // const response = await fetch('http://localhost:5000/api/login', {
-      const response = await fetch('https://powerleveling.xyz/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ login, password }),
-      });
-
-      // Check if successful
-      if (!response.ok) {
-        setMessage('Invalid login or password');
-        throw new Error('Invalid login or password');
+          if( res.error != "" )
+          {
+              setMessage('Invalid credentials');
+          }
+          else
+          {
+              var user = res.userDetails;
+              localStorage.setItem('user_data', JSON.stringify(user));
+              setMessage('');
+              window.location.href = '/dashboard';
+          }
       }
-
-      // Parse response
-      const data = await response.json();
-      const { userId, login: userLogin, displayName, email, isVerified, friends, friendRequests, friendRequestsSent, profile } = data;
-
-      // Check verification
-      if (isVerified) {
-        // Store user data
-        localStorage.setItem('user', JSON.stringify({ userId, userLogin, displayName, email, friends, profile }));
-
-        // Nav landing page
-        setMessage('');
-        navigate('/dashboard', { state: { userLogin, displayName } });
-      } else {
-        setError('Account is not verified.');
+      catch(error:any)
+      {
+          alert(error.toString());
+          return;
       }
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong, please try again.');
-    }
   };
       
+  function handleSetLoginName( e: any ) : void
+  {
+    setLoginName( e.target.value );
+  }
+
+  function handleSetPassword( e: any ) : void
+  {
+    setPassword( e.target.value );
+  }
+
   return (
     <>
       <div className="headerText">LOGIN</div>
@@ -62,8 +73,7 @@ const Login: React.FC = () => {
             id="userName"
             className='bodyText'
             placeholder="Login"
-            value={login}
-            onChange={(e) => setLogin(e.target.value)}
+            onChange={handleSetLoginName}
             required
 
             style={{
@@ -84,8 +94,7 @@ const Login: React.FC = () => {
             id="loginPassword"
             className='bodyText'
             placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={handleSetPassword}
             required
 
             style={{

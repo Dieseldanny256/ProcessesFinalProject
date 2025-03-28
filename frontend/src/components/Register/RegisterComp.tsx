@@ -7,14 +7,14 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  //const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
   // Handle Register
   const doRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    //setError('');
 
     try {
       //const response = await fetch('http://localhost:5000/api/register', {
@@ -27,6 +27,7 @@ const Register: React.FC = () => {
       });
 
       if (!response.ok) {
+        setMessage('Failed to register');
         throw new Error('Registration failed.');
       }
 
@@ -38,10 +39,10 @@ const Register: React.FC = () => {
         // Save state userID
         navigate('/verify-email', { state: { userId } });
       } else {
-        setError('No userId returned.');
+        //setError('No userId returned.');
       }
     } catch (err: any) {
-      setError(err.message || 'Something went wrong, please try again.');
+      //setError(err.message || 'Something went wrong, please try again.');
     }
   };
       

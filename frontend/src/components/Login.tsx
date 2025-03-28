@@ -47,11 +47,10 @@ function Login()
             }
             else
             {
-                var user = {firstName:res.firstName,lastName:res.lastName,id:res.id};
+                var user = res.userDetails;
                 localStorage.setItem('user_data', JSON.stringify(user));
                 setMessage('');
                 window.location.href = '/cards';
-                console.log("Correct password given!");
             }
         }
         catch(error:any)

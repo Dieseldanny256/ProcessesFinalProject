@@ -1,25 +1,22 @@
-import { useNavigate } from "react-router-dom";
-
 function LoggedInName()
 {
+    let _ud : any = localStorage.getItem('user_data');
+    let ud = JSON.parse( _ud );
+    //let userId : string = ud.id;
+    let displayName : string = ud.displayName
 
-    // var user={}
-
-    const navigate = useNavigate();
-
-    function doLogout(event:any) : void
+    const doLogout = (event:any) =>
     {
-	    event.preventDefault();
-        alert('doLogout');
-        navigate("/login");
-    };    
+        event.preventDefault();
+        localStorage.removeItem("user_data")
+        window.location.href = '/';
+    };
 
     return(
-      <div id="loggedInDiv">
-        <span id="userName">Logged In As John Doe </span><br />
-        <button type="button" id="logoutButton" className="buttons" 
-           onClick={doLogout}> Log Out </button>
-      </div>
+        <div id="loggedInDiv">
+        <span id="userName">Logged In As {displayName}</span><br />
+        <button type="button" id="logoutButton" className="buttons" onClick={doLogout}> Log Out </button>
+        </div>
     );
 };
 
