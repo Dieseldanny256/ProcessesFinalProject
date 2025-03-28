@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const Register: React.FC = () => {
   // Hooks
@@ -7,45 +6,50 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
-  //const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const navigate = useNavigate();
+
+  const app_name = 'powerleveling.xyz';
+  function buildPath(route:string) : string
+  {
+      if (process.env.NODE_ENV != 'development')
+      {
+      return 'http://' + app_name + ':5000/' + route;
+      }
+      else
+      {
+      return 'http://localhost:5000/' + route;
+      }
+  }
 
   // Handle Register
-  const doRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    //setError('');
+  async function doRegister(event:any) : Promise<void>
+  {
+      event.preventDefault();
+      var obj = {login:login,password:password,displayName:displayName,email:email};
+      var js = JSON.stringify(obj);
+      try
+      {
+          //Get the API response
+          const response = await fetch(buildPath('api/register'),
+          {method:'POST',body:js,headers:{'Content-Type':'application/json'}});
+          var res = JSON.parse(await response.text());
 
-    try {
-      //const response = await fetch('http://localhost:5000/api/register', {
-      const response = await fetch('https://powerleveling.xyz/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ login, password, displayName, email }),
-      });
-
-      if (!response.ok) {
-        setMessage('Failed to register');
-        throw new Error('Registration failed.');
+          if( res.error != "" )
+          {
+              setMessage(res.error);
+          }
+          else
+          {
+              window.location.href = '/verifyemail';
+          }
       }
-
-      const data = await response.json();
-      const { userId } = data; // UserId
-
-      if (userId) {
-        // Nav Verification
-        // Save state userID
-        navigate('/verify-email', { state: { userId } });
-      } else {
-        //setError('No userId returned.');
+      catch(error:any)
+      {
+          alert(error.toString());
+          return;
       }
-    } catch (err: any) {
-      //setError(err.message || 'Something went wrong, please try again.');
-    }
   };
-      
+  
   return (
     <>
       <div className="headerText2">REGISTER</div>
@@ -57,7 +61,7 @@ const Register: React.FC = () => {
             type="text"
             id="loginName"
             className='bodyText'
-            placeholder="Login"
+            placeholder="Username"
             value={login}
             onChange={(e) => setLogin(e.target.value)} 
             required
@@ -72,11 +76,11 @@ const Register: React.FC = () => {
             }}
           />
         <br />
-          <label htmlFor="loginName" style={{ fontWeight: "bold", display: "block", marginBottom: "2vh" }}>
+          <label htmlFor="email" style={{ fontWeight: "bold", display: "block", marginBottom: "2vh" }}>
           </label>
           <input
             type="email"
-            id="loginName"
+            id="email"
             className='bodyText'
             placeholder="Email"
             value={email} 
@@ -94,13 +98,13 @@ const Register: React.FC = () => {
             }}
           />
         <br />
-          <label htmlFor="loginName" style={{ fontWeight: "bold", display: "block", marginBottom: "2vh" }}>
+          <label htmlFor="displayName" style={{ fontWeight: "bold", display: "block", marginBottom: "2vh" }}>
           </label>
           <input
             type="text"
-            id="loginName"
+            id="displayName"
             className='bodyText'
-            placeholder="DisplayName"
+            placeholder="Display Name"
             value={displayName} 
             onChange={(e) => setDisplayName(e.target.value)} 
             required

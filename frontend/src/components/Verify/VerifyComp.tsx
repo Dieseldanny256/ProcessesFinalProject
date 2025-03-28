@@ -1,16 +1,33 @@
-import React, { useState } from 'react';3
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+let _ud : any = localStorage.getItem('user_data');
+let userId = null;
+if (_ud)
+{
+  let ud = JSON.parse( _ud );
+  userId = ud.userId;
+}
+
+const app_name = 'powerleveling.xyz';
+function buildPath(route:string) : string
+{
+  if (process.env.NODE_ENV != 'development')
+  {
+  return 'http://' + app_name + ':5000/' + route;
+  }
+  else
+  {
+  return 'http://localhost:5000/' + route;
+  }
+}
 
 const Verify: React.FC = () => {
-  const location = useLocation();
   const navigate = useNavigate();
 
-  // get userId
-  const userId = location.state?.userId;
   // Hooks
   const [verificationCode, setVerificationCode] = useState('');
-  //const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [message, setMessage] = useState('');
 
   // Redirect if userId is missing (causes the header and box to not apear somtimes)
   if (!userId) {
@@ -18,48 +35,41 @@ const Verify: React.FC = () => {
     return null;
   }
 
-  const doVerify = async (e: React.FormEvent) => {
+  const doVerify = async (event: React.FormEvent) => {
+    event.preventDefault();
+    var obj = {userId:userId,verificationCode:verificationCode};
+    var js = JSON.stringify(obj);
+    try
+    {
+        //Get the API response
+        const response = await fetch(buildPath('api/verifyEmail'),
+        {method:'POST',body:js,headers:{'Content-Type':'application/json'}});
+        var res = JSON.parse(await response.text());
 
-    e.preventDefault();
-    //setError('');
-    setSuccessMessage('');
-
-    try {
-      // const response = await fetch('http://localhost:5000/api/verifyEmail', {
-      const response = await fetch('https://powerleveling.xyz/api/verifyEmail', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId, verificationCode }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Verification failed.');
-      }
-
-      const data = await response.json();
-      const { isVerified } = data;
-
-      if (isVerified) {
-        setSuccessMessage('Email verified successfully!');
-        setTimeout(() => navigate('/login'), 2000);
-      } else {
-        //setError('Invalid verification code.');
-      }
-    } catch (err: any) {
-      //setError(err.message || 'Something went wrong, please try again.');
+        if( res.error != "" )
+        {
+            setMessage(res.error);
+        }
+        else
+        {
+            window.location.href = '/dashboard';
+        }
     }
-  };
+    catch(error:any)
+    {
+        alert(error.toString());
+        return;
+    }
+};
       
   return (
     <>
       <div className="headerText2">VERIFY</div>
-      <div id="loginDiv">
+      <div id="verifyDiv">
         <br />
           <input
             type="text"
-            id="loginName"
+            id="verifyCode"
             className='bodyText'
             placeholder="Verification Code"
             value={verificationCode}
@@ -103,7 +113,7 @@ const Verify: React.FC = () => {
               color: "red"
             }}
           >
-            {successMessage}
+            {message}
           </span>
       </div>
     </>

@@ -42,7 +42,9 @@ const Login: React.FC = () => {
               var user = res.userDetails;
               localStorage.setItem('user_data', JSON.stringify(user));
               setMessage('');
-              window.location.href = '/dashboard';
+              //Check user's verification status
+              if (user.isVerified) {window.location.href = '/dashboard';}
+              else {window.location.href = '/verifyemail';}
           }
       }
       catch(error:any)
