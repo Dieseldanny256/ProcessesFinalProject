@@ -35,19 +35,19 @@ exports.setApp = function (app, client) {
             userId = Date.now(); // Generate a unique userId
 
             // Create a new Profile
-            const newProfile = new Profile({
+            const newProfile = {
                 userId,
                 displayName,
                 streak: 0,
                 powerlevel: 0,
-                stats: [],
+                stats: [0, 0, 0, 0, 0], // Initialize stats as an array of numbers
                 profilePicture: 0
-            });
+            };
 
             const profileResult = await profilesCollection.insertOne(newProfile);
 
             // Create a new User and link the Profile
-            const newUser = new User({
+            const newUser = {
                 userId,
                 login,
                 password,
@@ -58,13 +58,9 @@ exports.setApp = function (app, client) {
                 friendRequests: [],
                 friendRequestsSent: [],
                 profile: profileResult.insertedId
-            });
-
-            var userDetails = null;
+            };
 
             await usersCollection.insertOne(newUser);
-
-            var userDetails = newUser;
 
             const msg = {
                 to: email,
@@ -76,21 +72,23 @@ exports.setApp = function (app, client) {
 
             await sgMail.send(msg);
 
+            
         } catch (e) {
             error = e.toString();
         }
 
-        var ret = { error: error, userDetails: userDetails };
+        var ret = { error: error, userId: userId };
         res.status(200).json(ret);
     });
 
     app.post('/api/verifyEmail', async (req, res, next) => {
         // incoming: userId, verificationCode
-        // outgoing: error
+        // outgoing: userDetails, error
 
         const { userId, verificationCode } = req.body;
 
         var error = '';
+        var userDetails = null;
 
         try {
             const db = client.db();
@@ -101,6 +99,18 @@ exports.setApp = function (app, client) {
                 user.isVerified = true;
                 user.verificationCode = null;
                 await usersCollection.updateOne({ userId: userId }, { $set: user });
+
+                userDetails = {
+                    userId: user.userId,
+                    login: user.login,
+                    displayName: user.displayName,
+                    email: user.email,
+                    isVerified: user.isVerified,
+                    friends: user.friends,
+                    friendRequests: user.friendRequests,
+                    friendRequestsSent: user.friendRequestsSent,
+                    profile: user.profile
+                };
             } else {
                 error = 'Invalid verification code';
             }
@@ -108,7 +118,7 @@ exports.setApp = function (app, client) {
             error = e.toString();
         }
 
-        var ret = { error: error };
+        var ret = { userDetails: userDetails, error: error };
         res.status(200).json(ret);
     });
 
@@ -146,6 +156,33 @@ exports.setApp = function (app, client) {
         }
 
         var ret = { userDetails: userDetails, error: error };
+        res.status(200).json(ret);
+    });
+    
+    app.post('/api/getProfile', async (req, res, next) => {
+        // incoming: userId
+        // outgoing: profile, error
+    
+        const { userId } = req.body;
+    
+        var error = '';
+        var profile = null;
+    
+        try {
+            const db = client.db();
+            const profilesCollection = db.collection('Profiles');
+    
+            // Find the profile by userId
+            profile = await profilesCollection.findOne({ userId: userId });
+    
+            if (!profile) {
+                error = 'Profile not found';
+            }
+        } catch (e) {
+            error = e.toString();
+        }
+    
+        var ret = { profile: profile, error: error };
         res.status(200).json(ret);
     });
 
@@ -272,6 +309,40 @@ exports.setApp = function (app, client) {
         }
 
         var ret = { error: error };
+        res.status(200).json(ret);
+    });
+
+    app.post('/api/getTopPowerlevels', async (req, res, next) => {
+        // incoming: none
+        // outgoing: topProfiles [], error
+
+        var error = '';
+        var topProfiles = [];
+
+        try {
+            const db = client.db();
+            const profilesCollection = db.collection('Profiles');
+
+            // Fetch top 10 profiles sorted by powerlevel in descending order
+            topProfiles = await profilesCollection
+                .find({})
+                .sort({ powerlevel: -1 })
+                .limit(10)
+                .toArray();
+
+            topProfiles = topProfiles.map(profile => ({
+                userId: profile.userId,
+                displayName: profile.displayName,
+                streak: profile.streak,
+                powerlevel: profile.powerlevel,
+                stats: profile.stats,
+                profilePicture: profile.profilePicture
+            }));
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { topProfiles: topProfiles, error: error };
         res.status(200).json(ret);
     });
 }
