@@ -1,38 +1,32 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-let _ud : any = localStorage.getItem('user_data');
-let userId = null;
-if (_ud)
-{
-  let ud = JSON.parse( _ud );
-  userId = ud.userId;
-}
-
-const app_name = 'powerleveling.xyz';
-function buildPath(route:string) : string
-{
-  if (process.env.NODE_ENV != 'development')
-  {
-  return 'http://' + app_name + ':5000/' + route;
-  }
-  else
-  {
-  return 'http://localhost:5000/' + route;
-  }
-}
+//import { useNavigate } from 'react-router-dom';
 
 const Verify: React.FC = () => {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   // Hooks
   const [verificationCode, setVerificationCode] = useState('');
   const [message, setMessage] = useState('');
 
-  // Redirect if userId is missing (causes the header and box to not apear somtimes)
-  if (!userId) {
-    navigate('/register');
-    return null;
+  const app_name = 'powerleveling.xyz';
+  function buildPath(route:string) : string
+  {
+    if (process.env.NODE_ENV != 'development')
+    {
+    return 'http://' + app_name + ':5000/' + route;
+    }
+    else
+    {
+    return 'http://localhost:5000/' + route;
+    }
+  }
+
+  let _ud : any = localStorage.getItem('user_data');
+  let userId = null;
+  if (_ud)
+  {
+    let ud = JSON.parse( _ud );
+    userId = ud.userId;
   }
 
   const doVerify = async (event: React.FormEvent) => {

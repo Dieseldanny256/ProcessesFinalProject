@@ -60,7 +60,11 @@ exports.setApp = function (app, client) {
                 profile: profileResult.insertedId
             });
 
+            var userDetails = null;
+
             await usersCollection.insertOne(newUser);
+
+            var userDetails = newUser;
 
             const msg = {
                 to: email,
@@ -76,7 +80,7 @@ exports.setApp = function (app, client) {
             error = e.toString();
         }
 
-        var ret = { error: error, userId: userId };
+        var ret = { error: error, userDetails: userDetails };
         res.status(200).json(ret);
     });
 

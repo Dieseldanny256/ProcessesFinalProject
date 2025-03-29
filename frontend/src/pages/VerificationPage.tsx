@@ -4,7 +4,7 @@ import PageTitle from '../components/Images/PageTitleImg';
 import Verify from '../components/Verify/VerifyComp';
 import VerifyBox from '../components/Verify/VerifyBox';
 
-const CardPage = () =>
+const VerifyPage = () =>
 {
     return(
         <div>
@@ -18,4 +18,4 @@ const CardPage = () =>
     );
 }
 
-export default CardPage;
+export default VerifyPage;
