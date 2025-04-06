@@ -30,6 +30,14 @@ exports.setApp = function (app, client) {
                 error = 'Login already exists';
                 return res.status(400).json({ error: error });
             }
+            
+            // Check if display name already exists
+            const existingDisplayName = await profilesCollection.findOne({ displayName: displayName });
+            if (existingDisplayName) {
+                error = 'Display name already exists';
+                return res.status(400).json({ error: error });
+            }
+
 
             const verificationCode = crypto.randomBytes(8).toString('hex');
             userId = Date.now(); // Generate a unique userId
