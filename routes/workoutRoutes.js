@@ -32,36 +32,29 @@ router.post('/log', async (req, res) => {
     try {
         const { userId, date, exercises } = req.body;
 
-        // This step is for validating and converting userId to ObjectId
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({ error: 'Invalid userId format' });
         }
-        const userObjectId = new mongoose.Types.ObjectId(userId);
 
-        // This step is for checking if a workout already exists for the selected date
+        const userObjectId = new mongoose.Types.ObjectId(userId);
         let workout = await Workout.findOne({ userId: userObjectId, date });
 
         if (workout) {
-            // This step is for updating the existing workout
             workout.exercises = exercises;
             await workout.save();
         } else {
-            // This step is for creating a new workout if none exists
             workout = new Workout({
                 userId: userObjectId,
                 date,
-                exercises
+                exercises,
+                checkedOff: false
             });
             await workout.save();
         }
 
-        // This step is for calculating updated stats after logging
         const updatedStats = await updateStats(userId);
-
-        // This step is for calculating powerlevel as the sum of all updatedStats values
         const powerlevel = Object.values(updatedStats).reduce((a, b) => a + b, 0);
 
-        // This step is for returning updated stats and powerlevel
         res.status(201).json({
             message: 'Workout logged successfully!',
             updatedStats,
@@ -79,13 +72,11 @@ router.put('/:userId/:date', async (req, res) => {
         const { userId, date } = req.params;
         const { exercises } = req.body;
 
-        // This step is for validating and converting userId to ObjectId
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({ error: 'Invalid userId format' });
         }
-        const userObjectId = new mongoose.Types.ObjectId(userId);
 
-        // This step is for finding and updating the workout
+        const userObjectId = new mongoose.Types.ObjectId(userId);
         const workout = await Workout.findOneAndUpdate(
             { userId: userObjectId, date },
             { exercises },
@@ -96,7 +87,6 @@ router.put('/:userId/:date', async (req, res) => {
             return res.status(404).json({ error: 'Workout not found for the specified date' });
         }
 
-        // This step is for updating stats after modifying workout
         const updatedStats = await updateStats(userId);
         const powerlevel = Object.values(updatedStats).reduce((a, b) => a + b, 0);
 
@@ -112,14 +102,13 @@ router.delete('/:userId/:date/:exerciseId', async (req, res) => {
     try {
         const { userId, date, exerciseId } = req.params;
 
-        // This step is for validating and converting IDs to ObjectId
         if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(exerciseId)) {
             return res.status(400).json({ error: 'Invalid userId or exerciseId format' });
         }
+
         const userObjectId = new mongoose.Types.ObjectId(userId);
         const exerciseObjectId = new mongoose.Types.ObjectId(exerciseId);
 
-        // This step is for finding the workout and removing the exercise
         const workout = await Workout.findOneAndUpdate(
             { userId: userObjectId, date },
             { $pull: { exercises: { exerciseId: exerciseObjectId } } },
@@ -130,7 +119,6 @@ router.delete('/:userId/:date/:exerciseId', async (req, res) => {
             return res.status(404).json({ error: 'Workout not found or exercise not found' });
         }
 
-        // This step is for updating stats after deleting exercise
         const updatedStats = await updateStats(userId);
         const powerlevel = Object.values(updatedStats).reduce((a, b) => a + b, 0);
 
@@ -146,16 +134,13 @@ router.get('/:userId/history', async (req, res) => {
     try {
         const { userId } = req.params;
 
-        // This step is for validating and converting userId to ObjectId
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({ error: 'Invalid userId format' });
         }
-        const userObjectId = new mongoose.Types.ObjectId(userId);
 
-        // This step is for retrieving all workouts for the user
+        const userObjectId = new mongoose.Types.ObjectId(userId);
         const workouts = await Workout.find({ userId: userObjectId });
 
-        // This step is for calculating streak based on consecutive days
         let streak = 0;
         let previousDate = null;
 
@@ -165,12 +150,7 @@ router.get('/:userId/history', async (req, res) => {
             const currentDate = moment(workout.date).format('YYYY-MM-DD');
             if (previousDate) {
                 const diff = moment(currentDate).diff(moment(previousDate), 'days');
-                if (diff === 1) {
-                    //consecutive
-                    streak++;
-                } else {
-                    streak = 1;
-                }
+                streak = (diff === 1) ? streak + 1 : 1;
             } else {
                 streak = 1;
             }
@@ -184,30 +164,41 @@ router.get('/:userId/history', async (req, res) => {
     }
 });
 
-// This step is for retrieving the exercises for a specific user and date
-router.get('/:userId/:date/exercises', async (req, res) => {
+// This step is for toggling workout checkoff and updating stats
+router.post('/:userId/:date/checkoff', async (req, res) => {
     try {
         const { userId, date } = req.params;
 
-        // This step is for validating and converting userId to ObjectId
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({ error: 'Invalid userId format' });
         }
 
         const userObjectId = new mongoose.Types.ObjectId(userId);
-
-        // This step is for finding the workout and populating exercise details
-        const workout = await Workout.findOne({ userId: userObjectId, date }).populate('exercises.exerciseId');
+        const workout = await Workout.findOne({ userId: userObjectId, date });
 
         if (!workout) {
             return res.status(404).json({ error: 'Workout not found for the specified date' });
         }
 
-        // This step is for returning only the exercises
-        res.status(200).json({ exercises: workout.exercises });
+        workout.checkedOff = !workout.checkedOff;
+        await workout.save();
+
+        const updatedStats = await updateStats(userId);
+        const powerlevel = Object.values(updatedStats).reduce((a, b) => a + b, 0);
+
+        const message = workout.checkedOff
+            ? 'Workout checked off and points added!'
+            : 'Workout unchecked and points deducted!';
+
+        res.status(200).json({
+            message,
+            checkedOff: workout.checkedOff,
+            updatedStats,
+            powerlevel
+        });
     } catch (error) {
-        console.error('Error retrieving exercises for the day:', error);
-        res.status(500).json({ error: 'Failed to retrieve exercises' });
+        console.error('Error toggling checkoff:', error);
+        res.status(500).json({ error: 'Failed to toggle checkoff' });
     }
 });
 
