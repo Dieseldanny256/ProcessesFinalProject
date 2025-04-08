@@ -11,7 +11,8 @@ const workoutExerciseSchema = new mongoose.Schema({
 const workoutSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, required: true },
   date: { type: String, required: true },
-  exercises: [workoutExerciseSchema]
+  exercises: [workoutExerciseSchema],
+  checkedOff: { type: Boolean, default: false }
 });
 
 // This step is for exporting the Workout model
