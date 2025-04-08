@@ -9,11 +9,9 @@ function PageTitle()
       alt = "title"
       style={{
         display: "flex",
-        position: "absolute",
-        width: "65vw",
-        height: "auto",
-        top: "4vh",
-        left: "3vw",
+        width: "45vw",
+        padding: "10px",
+        height: "auto"
       }}
     />
   );

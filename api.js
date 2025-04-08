@@ -61,6 +61,7 @@ exports.setApp = function (app, client) {
             };
 
             await usersCollection.insertOne(newUser);
+            userDetails = newUser;
 
             const msg = {
                 to: email,
@@ -77,7 +78,7 @@ exports.setApp = function (app, client) {
             error = e.toString();
         }
 
-        var ret = { error: error, userId: userId };
+        var ret = { error: error, userDetails: userDetails };
         res.status(200).json(ret);
     });
 
@@ -99,18 +100,6 @@ exports.setApp = function (app, client) {
                 user.isVerified = true;
                 user.verificationCode = null;
                 await usersCollection.updateOne({ userId: userId }, { $set: user });
-
-                userDetails = {
-                    userId: user.userId,
-                    login: user.login,
-                    displayName: user.displayName,
-                    email: user.email,
-                    isVerified: user.isVerified,
-                    friends: user.friends,
-                    friendRequests: user.friendRequests,
-                    friendRequestsSent: user.friendRequestsSent,
-                    profile: user.profile
-                };
             } else {
                 error = 'Invalid verification code';
             }
@@ -118,7 +107,7 @@ exports.setApp = function (app, client) {
             error = e.toString();
         }
 
-        var ret = { userDetails: userDetails, error: error };
+        var ret = { error: error };
         res.status(200).json(ret);
     });
 

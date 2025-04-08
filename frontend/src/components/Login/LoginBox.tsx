@@ -30,10 +30,7 @@ const container: CSSProperties = {
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-start",
-    position: "absolute",
-    left: "3vw",
-    top: "60%",
-    transform: "translateY(-50%)",
+    transform: "translateX(10%)",
   }
 
 const outLine: CSSProperties = {
@@ -49,7 +46,6 @@ const BoxStyle: CSSProperties = {
     backgroundColor: "white",
     padding: "0vh",
     width: "45vw",
-    minHeight: "50vh",
     position: "relative",
     clipPath: "polygon(0 0, 99.2% 0%, 69.5% 100%, 0% 100%)",
   }

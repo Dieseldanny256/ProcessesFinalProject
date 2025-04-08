@@ -1,18 +1,20 @@
 import BackGround from '../components/Images/BackGroundImg';
+import NavigationBar from '../components/Dashboard/NavigationBar';
 import BuffMan from '../components/Images/BuffManImg';
-import DashBoard from '../components/Images/DashBoard';
-import PageTitle from '../components/Images/PageTitleImg';
+import DashBoard from '../components/Dashboard/DashBoard';
+//import PageTitle from '../components/Images/PageTitleImg';
 
-const CardPage = () =>
+const DashboardPage = () =>
 {
     return(
         <div>
-        <BackGround />
-            <PageTitle />
+        <BackGround>
+            <NavigationBar />
             <DashBoard />
-          <BuffMan />
+            <BuffMan />
+        </BackGround>
       </div>
     );
 }
 
-export default CardPage;
+export default DashboardPage;
