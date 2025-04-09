@@ -9,9 +9,13 @@ const workoutExerciseSchema = new mongoose.Schema({
 
 // This step is for defining the schema for Workout
 const workoutSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  // This step is for storing userId as a Number to match Profile.userId
+  userId: { type: Number, required: true },
+
   date: { type: String, required: true },
   exercises: [workoutExerciseSchema],
+
+  // This step is for tracking if workout is checked off
   checkedOff: { type: Boolean, default: false }
 });
 
