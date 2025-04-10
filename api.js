@@ -309,21 +309,59 @@ exports.setApp = function (app, client) {
         res.status(200).json(ret);
     });
 
+    app.post('/api/denyFriendRequest', async (req, res, next) => {
+        // incoming: receivingUserId, sendingUserId
+        // outgoing: error
+
+        const { receivingUserId, sendingUserId } = req.body;
+
+        var error = '';
+
+        try {
+            const db = client.db();
+            const usersCollection = db.collection('Users');
+
+            // Remove the sendingUserId from the receiving user's friendRequests array
+            await usersCollection.updateOne(
+                { userId: receivingUserId },
+                { $pull: { friendRequests: sendingUserId } }
+            );
+
+            // Remove the receivingUserId from the sending user's friendRequestsSent array
+            await usersCollection.updateOne(
+                { userId: sendingUserId },
+                { $pull: { friendRequestsSent: receivingUserId } }
+            );
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { error: error };
+        res.status(200).json(ret);
+    });
+
     app.post('/api/getTopPowerlevels', async (req, res, next) => {
-        // incoming: none
-        // outgoing: topProfiles [], error
+        // incoming: userId, page
+        // outgoing: topProfiles [], userRank, error
+
+        const { userId, page } = req.body;
 
         var error = '';
         var topProfiles = [];
+        var userRank = null;
 
         try {
             const db = client.db();
             const profilesCollection = db.collection('Profiles');
 
-            // Fetch top 10 profiles sorted by powerlevel in descending order
+            // Calculate the skip value based on the page number
+            const skip = (page - 1) * 10;
+
+            // Fetch the requested set of 10 profiles sorted by powerlevel in descending order
             topProfiles = await profilesCollection
                 .find({})
                 .sort({ powerlevel: -1 })
+                .skip(skip)
                 .limit(10)
                 .toArray();
 
@@ -335,11 +373,114 @@ exports.setApp = function (app, client) {
                 stats: profile.stats,
                 profilePicture: profile.profilePicture
             }));
+
+            // Find the rank of the given userId
+            const allProfiles = await profilesCollection
+                .find({})
+                .sort({ powerlevel: -1 })
+                .toArray();
+
+            userRank = allProfiles.findIndex(profile => profile.userId === userId) + 1;
         } catch (e) {
             error = e.toString();
         }
 
-        var ret = { topProfiles: topProfiles, error: error };
+        var ret = { topProfiles: topProfiles, userRank: userRank, error: error };
+        res.status(200).json(ret);
+    });
+
+    app.post('/api/getTopFriendPowerLevels', async (req, res, next) => {
+        // incoming: userId, page
+        // outgoing: topProfiles [], userRank, error
+
+        const { userId, page } = req.body;
+
+        var error = '';
+        var topProfiles = [];
+        var userRank = null;
+
+        try {
+            const db = client.db();
+            const usersCollection = db.collection('Users');
+            const profilesCollection = db.collection('Profiles');
+
+            // Find the user to get their friends list
+            const user = await usersCollection.findOne({ userId: userId });
+            if (!user) {
+                error = 'User not found';
+                return res.status(400).json({ error: error });
+            }
+
+            const friendsList = user.friends || [];
+            // Include the user itself in the friends list
+            const friendsAndSelf = [...friendsList, userId];
+
+            // Calculate the skip value based on the page number
+            const skip = (page - 1) * 10;
+
+            // Fetch the requested set of 10 profiles of friends (including the user) sorted by powerlevel in descending order
+            topProfiles = await profilesCollection
+                .find({ userId: { $in: friendsAndSelf } })
+                .sort({ powerlevel: -1 })
+                .skip(skip)
+                .limit(10)
+                .toArray();
+
+            topProfiles = topProfiles.map(profile => ({
+                userId: profile.userId,
+                displayName: profile.displayName,
+                streak: profile.streak,
+                powerlevel: profile.powerlevel,
+                stats: profile.stats,
+                profilePicture: profile.profilePicture
+            }));
+
+            // Find the rank of the given userId among friends (including the user)
+            const allFriendProfiles = await profilesCollection
+                .find({ userId: { $in: friendsAndSelf } })
+                .sort({ powerlevel: -1 })
+                .toArray();
+
+            userRank = allFriendProfiles.findIndex(profile => profile.userId === userId) + 1;
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { topProfiles: topProfiles, userRank: userRank, error: error };
+        res.status(200).json(ret);
+    });
+
+    app.post('/api/searchProfiles', async (req, res, next) => {
+        // incoming: searchText
+        // outgoing: matchingProfiles [], error
+
+        const { searchText } = req.body;
+
+        var error = '';
+        var matchingProfiles = [];
+
+        try {
+            const db = client.db();
+            const profilesCollection = db.collection('Profiles');
+
+            // Search for profiles with display names that match or partially match the searchText
+            matchingProfiles = await profilesCollection
+                .find({ displayName: { $regex: searchText, $options: 'i' } }) // Case-insensitive search
+                .toArray();
+
+            matchingProfiles = matchingProfiles.map(profile => ({
+                userId: profile.userId,
+                displayName: profile.displayName,
+                streak: profile.streak,
+                powerlevel: profile.powerlevel,
+                stats: profile.stats,
+                profilePicture: profile.profilePicture
+            }));
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { matchingProfiles: matchingProfiles, error: error };
         res.status(200).json(ret);
     });
 }
