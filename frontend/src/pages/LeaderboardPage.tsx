@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import GreyBackground from '../components/Images/GreyBackground';
 import logoImage from '../assets/logo.png';
+import { Link } from 'react-router-dom';
 
 const LeaderboardPage: React.FC = () => {
   const [isGlobal, setIsGlobal] = useState(true);
@@ -18,37 +19,51 @@ const LeaderboardPage: React.FC = () => {
   let userId = '';
   userId = userData.userId;
 
-  // functions to save variables from API
+  // functions
   const [powerLevel, setPowerLevel] = useState(0);
   const [TopPowerLevels, SetTopPowerLevels] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
+  const isUserRow = (entry: any) => entry.userId === userData.userId;
+  const [friendsLoaded, setFriendsLoaded] = useState(false);
+  const [globalLoaded, setGlobalLoaded] = useState(false);
+  const [displayName, setDisplay] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [userRank, setUserRank] = useState(0);
 
-  //searchFriends API - get friends for leaderboard
   useEffect(() => {
-    async function searchFriends(): Promise<void> {
-      let obj = { userId: userId };
-      let js = JSON.stringify(obj);
-
-      const response = await fetch('http://localhost:5000/api/searchFriends', { // change URL for actual website
-        method: 'POST',
-        body: js,
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      let txt = await response.text();
-      let res = JSON.parse(txt);
-      setFriends(res.friendResults);
-      console.log(res);
+    if (!isGlobal && !friendsLoaded) {
+      async function searchFriends(): Promise<void> {
+        const response = await fetch('http://localhost:5000/api/searchFriends', {
+          method: 'POST',
+          body: JSON.stringify({ userId }),
+          headers: { 'Content-Type': 'application/json' },
+        });
+  
+        const res = await response.json();
+        const userFriend = {
+          userId: userData.userId,
+          displayName: displayName,
+          powerlevel: powerLevel,
+        };
+  
+        const updatedFriends = [userFriend, ...res.friendResults];
+        setFriends(updatedFriends);
+        setFriendsLoaded(true);
+      }
+  
+      searchFriends();
     }
-
-    searchFriends();
-  }, [userId]);
-
+  }, [isGlobal, friendsLoaded, userId, powerLevel, userData.displayName]);
+  
   // getProfile API - to get powerlevel, and rank soon?
   useEffect(() => {
     async function getProfile(): Promise<void> {
       let obj = { userId: userId };
       let js = JSON.stringify(obj);
+
+      console.log('getting user profile');
 
       const response = await fetch('http://localhost:5000/api/getProfile', { // change URL for actual website
         method: 'POST', 
@@ -59,6 +74,7 @@ const LeaderboardPage: React.FC = () => {
       let txt = await response.text();
       let res = JSON.parse(txt);
 
+      setDisplay(res.profile.displayName);
       setPowerLevel(res.profile.powerlevel);
     }
 
@@ -71,6 +87,8 @@ const LeaderboardPage: React.FC = () => {
       let obj = { userId: userId };
       let js = JSON.stringify(obj);
 
+      console.log('getting top profiles');
+
       const response = await fetch('http://localhost:5000/api/getTopPowerlevels', {
         method: 'POST',
         body: js,
@@ -79,42 +97,101 @@ const LeaderboardPage: React.FC = () => {
 
       let txt = await response.text();
       let res = JSON.parse(txt);
-
+      setUserRank(res.userRank);
       const cappedTopProfiles = res.topProfiles.map((profile: any) => ({
         ...profile,
         rank: Math.max(0, Math.min(100, profile.rank)),
       }));
       
       SetTopPowerLevels(cappedTopProfiles);
+      setGlobalLoaded(true);
     }
 
     getTopPowerlevels();
   }, [userId]);
 
-  // TODO - visiting other profiles
-  const handleRowClick = (rank: number) => {
-    window.location.href = `/profile/${rank}`;
-  };
-
-  const handleMouseEnter = (rank: number) => {
-    setHoveredRow(rank);
+  const handleMouseEnter = (index: number) => {
+    setHoveredRow(index);
   };
 
   const handleMouseLeave = () => {
     setHoveredRow(null);
   };
 
+  const fetchData = async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+  
+    const endpoint = isGlobal ? '/api/getTopPowerlevels' : '/api/getTopFriendPowerLevels';
+    const response = await fetch(`http://localhost:5000${endpoint}`, {
+      method: 'POST',
+      body: JSON.stringify({ userId, page }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+  
+    const res = await response.json();
+  
+    if (res.error) {
+      console.error(res.error);
+      setLoading(false);
+      return;
+    }
+  
+    const newProfiles = res.topProfiles.map((profile: any, index: number) => ({
+      ...profile,
+      rank: (page - 1) * 10 + index + 1,
+    }));
+  
+    if (isGlobal) {
+      SetTopPowerLevels(prev => [...prev, ...newProfiles]);
+    } else {
+      setFriends(prev => [...prev, ...newProfiles]);
+    }
+  
+    setHasMore(newProfiles.length === 10);
+    setPage(prev => prev + 1);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollArea = scrollAreaRef.current;
+      if (!scrollArea) return;
+  
+      if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 100) {
+        fetchData();
+      }
+    };
+  
+    const scrollArea = scrollAreaRef.current;
+    if (scrollArea) {
+      scrollArea.addEventListener('scroll', handleScroll);
+    }
+  
+    return () => {
+      if (scrollArea) {
+        scrollArea.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [fetchData]); 
+
   // main return
   return (
     <div>
-      <div style={{ position: 'fixed', width: '100%', height: '100%', zIndex: 0 }}>
+      <div style={{ position: 'fixed', width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}>
         <GreyBackground />
       </div>
 
       {/* Header */}
       <header style={header}>
-        <div style={leftHeader}>
-          <a href="/dashboard" style={backArrowStyle}>&lt;</a>
+        <div style={leftHeader} 
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}>
+          <Link to="/dashboard" style={backArrowStyle}>&lt;</Link>
         </div>
         <div style={centerHeader}>LEADERBOARD</div>
         <img src={logoImage} alt="Logo" style={logo} />
@@ -122,49 +199,92 @@ const LeaderboardPage: React.FC = () => {
 
       {/* Tabs to toggle between leaderboards */}
       <div style={tabWrapper}>
-        <button style={tabButton(isGlobal)} onClick={() => setIsGlobal(true)}>Global</button>
+        <button style={tabButton(isGlobal)} onClick={() => { console.log("Clicked Friends Tab"); setIsGlobal(true)}}>Global</button>
         <button style={tabButton(!isGlobal)} onClick={() => setIsGlobal(false)}>Friends</button>
       </div>
 
       {/* Leaderboard */}
       <div style={leaderboardWrapper}>
         <div ref={scrollAreaRef} style={scrollArea}>
-          {/* Leaderboard Header*/}
           <div style={leaderboardHeader}>
             <div style={columnStyle('rgb(255, 255, 0)')}>#</div>
             <div style={columnStyle('rgb(255, 255, 0)', true)}>Username</div>
             <div style={columnStyle('rgb(255, 255, 0)')}>Power Level</div>
           </div>
-          {/* Leaderboard Body*/}
-          {(isGlobal ? TopPowerLevels : friends)
-            .sort((a, b) => b.powerlevel - a.powerlevel)
-            .map((entry, index) => (
-              <div
-                key={index}
-                style={getLeaderboardRowStyle(hoveredRow === entry.rank)}
-                onClick={() => handleRowClick(entry.rank)}
-                onMouseEnter={() => handleMouseEnter(entry.rank)}
-                onMouseLeave={handleMouseLeave}
-              >
-                <div style={columnStyle('white')}>{index + 1}</div>
-                <div style={columnStyle('white', true)}>{entry.displayName}</div>
-                <div style={columnStyle('white')}>{entry.powerlevel}</div>
-              </div>
-            ))}
+
+          {/* Global Leaderboard */}
+          {isGlobal ? (
+            !globalLoaded ? (
+              <div style={loadingStyle}>Loading Global Leaderboard...</div>
+            ) : (
+              TopPowerLevels.sort((a, b) => b.powerlevel - a.powerlevel).map((entry, index) => (
+                <Link to={`/profile/${entry.userId}`} key={index} style={{ textDecoration: 'none' }}>
+                  <div
+                    style={{
+                      ...getLeaderboardRowStyle(hoveredRow === index),
+                      backgroundColor: isUserRow(entry)
+                        ? 'rgb(205, 205, 205)'
+                        : (hoveredRow === index ? 'rgb(230, 230, 230)' : 'rgb(255, 255, 255)'),
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={() => handleMouseEnter(index)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <div style={columnStyle('transparent')}>{index + 1}</div>
+                    <div style={columnStyle('transparent', true)}>{entry.displayName}</div>
+                    <div style={columnStyle('transparent')}>{entry.powerlevel}</div>
+                  </div>
+                </Link>
+              ))
+            )
+          ) : (
+            // Friends Leaderboard
+            !friendsLoaded ? (
+              <div style={loadingStyle}>Loading Friends Leaderboard...</div>
+            ) : (
+              friends.sort((a, b) => b.powerlevel - a.powerlevel).map((entry, index) => (
+                <Link to={`/profile/${entry.userId}`} key={index} style={{ textDecoration: 'none' }}>
+                  <div
+                    key={index}
+                    style={{
+                      ...getLeaderboardRowStyle(hoveredRow === index),
+                      backgroundColor: isUserRow(entry)
+                      ? 'rgb(205, 205, 205)' 
+                      : (hoveredRow === index ? 'rgb(230, 230, 230)' : 'rgb(255, 255, 255)'),
+                    }}
+                    onMouseEnter={() => handleMouseEnter(index)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <div style={columnStyle('transparent')}>{index + 1}</div>
+                    <div style={columnStyle('transparent', true)}>{entry.displayName}</div>
+                    <div style={columnStyle('transparent')}>{entry.powerlevel}</div>
+                  </div>
+                </Link>
+              ))
+            )
+          )}
         </div>
       </div>
-
 
       {/* Score Parallelogram */}
       <div style={parallelogramWrapper}>
         <div style={parallelogramContent}>
           <div style={parallelogramText}>Your Score:</div>
-          <div style={parallelogramScore}>{powerLevel} (#15)</div> 
+          <div style={parallelogramScore}>{powerLevel} (#{userRank})</div> 
         </div>
       </div>
     </div>
   );
 };
+
+const loadingStyle: React.CSSProperties = {
+  color: 'white',
+  fontSize: '24px',
+  padding: '40px',
+  textAlign: 'center',
+  fontFamily: 'microgramma-extended, sans-serif',
+};
+
 
 // header
 const header: React.CSSProperties = {
@@ -176,26 +296,29 @@ const header: React.CSSProperties = {
   fontFamily: 'microgramma-extended, sans-serif',
   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.5)',
   width: '100%',
+  height: '18%',
   position: 'fixed',
   top: 0,
   left: 0,
   zIndex: 2,
   borderBottom: '5px solid black',
+  userSelect: 'none',
 };
 
 const backArrowStyle: React.CSSProperties = {
-  fontSize: '70px',
   color: 'white',
-  textDecoration: 'none',
 };
 
 const leftHeader: React.CSSProperties = {
-  textAlign: 'left',
-  fontSize: '100px',
+  fontSize: '80px',
   color: 'white',
-  textDecoration: 'none',
-  marginBottom: '20px',
-  marginLeft: '15px',
+  marginLeft: '50px',
+  marginTop: '55px',
+  width: '2.5%',
+  height: '40%',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
 };
 
 const centerHeader: React.CSSProperties = {
@@ -227,12 +350,13 @@ const leaderboardWrapper: React.CSSProperties = {
   top: '222px',
   left: '10%',
   width: '80%',
-  height: '70%',
+  height: '63%',
   backgroundColor: 'rgba(0, 0, 0, 0.85)',
   border: '4px solid black',
   borderRadius: '12px',
   boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.62)',
   overflow: 'hidden',
+  userSelect: 'none',
 };
 
 const leaderboardHeader: React.CSSProperties = {
@@ -266,12 +390,10 @@ const getLeaderboardRowStyle = (isHovered: boolean): React.CSSProperties => ({
   fontSize: '18px',
   color: 'rgb(32, 32, 32)',
   height: '50px',
-  borderBottom: '2px solid #ccc',
-  transform: isHovered ? 'scale(1.02)' : 'scale(1)',
-  backgroundColor: isHovered ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.8)',
-  transition: 'transform 0.3s ease, background-color 0.3s ease',
-  zIndex: isHovered ? 10 : 1,
-  border: isHovered ? '2px solid rgba(0, 0, 0, 0.3)' : '1.5px solid rgba(0, 0, 0, 0.2)',
+  transform: isHovered ? 'scale(1)' : 'scale(1)',
+  backgroundColor: isHovered ? 'rgb(230, 230, 230)' : 'rgb(255, 255, 255)',
+  zIndex: 3,
+  border: '2px solid #ccc',
 });
 
 const scrollArea: React.CSSProperties = {
@@ -289,6 +411,7 @@ const tabWrapper: React.CSSProperties = {
   flexDirection: 'row',
   justifyContent: 'flex-start',
   gap: '0px',
+  userSelect: 'none',
 };
 
 const tabButton = (active: boolean): React.CSSProperties => ({
@@ -301,6 +424,7 @@ const tabButton = (active: boolean): React.CSSProperties => ({
   cursor: 'pointer',
   borderRadius: '5px',
   transition: '0.3s',
+  zIndex: 6,
   textTransform: 'uppercase',
 });
 
@@ -315,6 +439,7 @@ const parallelogramWrapper: React.CSSProperties = {
   border: '4px solid black',
   backgroundColor: '#BA0000',
   boxShadow: '2px 2px 10px rgba(0,0,0,0.5)',
+  userSelect: 'none',
 };
 
 const parallelogramContent: React.CSSProperties = {

@@ -1,4 +1,4 @@
-import React, { CSSProperties } from "react";
+import React, { CSSProperties, useEffect } from "react";
 //import { useNavigate } from "react-router-dom";
 
 const date = new Date();
@@ -144,8 +144,11 @@ async function loadWeekExercises(event:any) : Promise<void>
 
 const Calendar: React.FC = () => {
   //const navigate = useNavigate();
-  window.onload = (event): void => {loadWeekExercises(event)};
-
+  // Hi - Jacob
+  useEffect(() => {
+    loadWeekExercises(currentWeekOffset);
+  }, []);
+  
   return (
     <div style = {outerContainer}>
       <h1 id = "month" style = {month}></h1>

@@ -276,6 +276,40 @@ exports.setApp = function (app, client) {
         res.status(200).json(ret);
     });
 
+    app.post('/api/searchRequests', async (req, res, next) => {
+        // incoming: userId
+        // outgoing: friendResults [], error
+
+        const { userId } = req.body;
+
+        var error = '';
+        var requestResults = [];
+
+        try {
+            const db = client.db();
+            const user = await db.collection('Users').findOne({ userId: userId });
+
+            if (user) {
+                const friendsProfiles = await db.collection('Profiles').find({ userId: { $in: user.friendRequests } }).toArray();
+                requestResults = friendsProfiles.map(profile => ({
+                    userId: profile.userId,
+                    displayName: profile.displayName,
+                    streak: profile.streak,
+                    powerlevel: profile.powerlevel,
+                    stats: profile.stats,
+                    profilePicture: profile.profilePicture
+                }));
+            } else {
+                error = 'User not found';
+            }
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { requestResults: requestResults, error: error };
+        res.status(200).json(ret);
+    });
+
     app.post('/api/sendFriendRequest', async (req, res, next) => {
         // incoming: userId, friendUserId
         // outgoing: error

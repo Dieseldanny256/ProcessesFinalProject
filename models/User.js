@@ -21,7 +21,7 @@ const profileSchema = new mongoose.Schema({
   displayName: { type: String, required: true },
   streak: { type: Number, default: 0 },
   powerlevel: { type: Number, default: 0 },
-  stats: { type: [Number], default: [0, 0, 0, 0, 0, 0] }, // ✅ Corrected: use [Number]
+  stats: { type: [Number], default: [0, 0, 0, 0, 0, 0] },
   profilePicture: { type: Number, default: 0 }
 });
 
