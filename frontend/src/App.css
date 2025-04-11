@@ -115,6 +115,23 @@
   font-style: normal;
   font-size: 1.5vw;
   letter-spacing: 5px;
-  padding-bottom: 10vh;
+  height: 25vh;
+  margin-top: 0.1vh;
+  vertical-align: text-top;
+}
+
+.calendarItem {
+  border-color: #000000;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 3px;
+  color: black;
+  background: #BA0000;
+  font-family: "purista-web", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 1vw;
+  letter-spacing: 5px;
+  padding: 2px;
   margin-top: 0.1vh;
 }

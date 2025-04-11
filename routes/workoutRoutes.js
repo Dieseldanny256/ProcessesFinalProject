@@ -59,13 +59,11 @@ router.post('/log', async (req, res) => {
         }
 
         // This step is for calculating updated stats
-        const updatedStats = await updateStats(numericUserId);
-        const powerlevel = Object.values(updatedStats).reduce((a, b) => a + b, 0);
+        // const updatedStats = await updateStats(numericUserId);
+        // const powerlevel = Object.values(updatedStats).reduce((a, b) => a + b, 0);
 
         res.status(201).json({
-            message: 'Workout logged successfully!',
-            updatedStats,
-            powerlevel
+            message: 'Workout logged successfully!'
         });
     } catch (error) {
         console.error("Error logging workout:", error.message);
@@ -231,7 +229,7 @@ router.get('/:userId/:date/exercises', async (req, res) => {
         const workout = await Workout.findOne({ userId: numericUserId, date }).populate('exercises.exerciseId');
 
         if (!workout) {
-            return res.status(404).json({ error: 'Workout not found for the specified date' });
+            return res.status(200).json({ error: 'Workout not found for the specified date' });
         }
 
         // This step is for returning only exercises array
@@ -242,6 +240,43 @@ router.get('/:userId/:date/exercises', async (req, res) => {
     } catch (error) {
         console.error('Error fetching exercises for user on date:', error.message);
         res.status(500).json({ error: 'Failed to retrieve exercises' });
+    }
+});
+
+// This step is for adding a new exercise, creating a new workout if that 
+router.put('/:userId/:date/add', async (req, res) => {
+    try {
+        const { userId, date } = req.params;
+        const { exercises } = req.body;
+        const numericUserId = Number(userId);
+        if (!Number.isFinite(numericUserId)) {
+            return res.status(400).json({ error: 'Invalid userId format' });
+        }
+
+        // This step is for checking if workout already exists
+        let workout = await Workout.findOne({ userId: numericUserId, date });
+
+        if (workout) {
+            console.log(workout.exercises);
+            workout.exercises = workout.exercises.concat(exercises);
+            console.log(workout.exercises);
+            await workout.save();
+        } else {
+            workout = new Workout({
+                userId: numericUserId,
+                date,
+                exercises,
+                checkedOff: false
+            });
+            await workout.save();
+        }
+
+        res.status(201).json({
+            message: 'Workout added successfully!'
+        });
+    } catch (error) {
+        console.error("Error adding workout:", error.message);
+        res.status(500).json({ error: 'Failed to add workout' });
     }
 });
 
