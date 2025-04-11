@@ -148,7 +148,7 @@ const Calendar: React.FC = () => {
   useEffect(() => {
     loadWeekExercises(currentWeekOffset);
   }, []);
-  
+
   return (
     <div style = {outerContainer}>
       <h1 id = "month" style = {month}></h1>
