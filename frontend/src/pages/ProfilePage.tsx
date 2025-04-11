@@ -45,9 +45,10 @@ const ProfilePage: React.FC = () => {
   const [hoveredIndexModal, setHoveredIndexModal] = useState<number | null>(null);
   const [displayName, setDisplay] = useState<string>('');
   const [requestResults, setRequestResults] = useState<{ displayName: string; profileImage: string; userId: number}[]>([]);
+  const navigate = useNavigate();
+
   const [friendRequestsSent, setFriendRequestsSent] = useState<number[]>([]);
   const [friendIds, setFriendIds] = useState<number[]>([]);
-  const navigate = useNavigate();
 
   const _ud = localStorage.getItem('user_data');
   
@@ -98,8 +99,8 @@ const ProfilePage: React.FC = () => {
     let txt = await response.text();
     let res = JSON.parse(txt);
 
-    setFriends(res.friendResults);
-    setFriendIds(res.friendResults.map((friend: { userId: any; }) => friend.userId)); // <- NEW
+    setFriends(res.friendResults || []);
+    setFriendIds((res.friendResults || []).map((friend: { userId: any; }) => friend.userId));
     setLoadingFriends(false);
   }
 
@@ -116,8 +117,8 @@ const ProfilePage: React.FC = () => {
     let txt = await response.text();
     let res = JSON.parse(txt);
 
-    setRequestResults(res.requestResults);
-    setFriendRequestsSent(res.sentRequests.map((r: any) => r.userId)); // <- Adjust this based on your API shape
+    setRequestResults(res.requestResults || []);
+    setFriendRequestsSent(res.friendRequestsSent || []);
     setLoadingFriends(false);
   }
 
