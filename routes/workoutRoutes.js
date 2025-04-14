@@ -227,6 +227,7 @@ router.get('/:userId/:date/exercises', async (req, res) => {
 
         // This step is for finding the workout of the user on the specific date
         const workout = await Workout.findOne({ userId: numericUserId, date }).populate('exercises.exerciseId');
+        console.log(workout);
 
         if (!workout) {
             return res.status(200).json({ error: 'Workout not found for the specified date' });
@@ -257,9 +258,7 @@ router.put('/:userId/:date/add', async (req, res) => {
         let workout = await Workout.findOne({ userId: numericUserId, date });
 
         if (workout) {
-            console.log(workout.exercises);
             workout.exercises = workout.exercises.concat(exercises);
-            console.log(workout.exercises);
             await workout.save();
         } else {
             workout = new Workout({
@@ -277,6 +276,69 @@ router.put('/:userId/:date/add', async (req, res) => {
     } catch (error) {
         console.error("Error adding workout:", error.message);
         res.status(500).json({ error: 'Failed to add workout' });
+    }
+});
+
+function getDateString(date)
+{
+  let string = date.getFullYear() + "-";
+  let month = (date.getMonth() + 1).toString();
+  if (month.length < 2) {month = "0" + month;}
+  let day = (date.getDate()).toString();
+  if (day.length < 2) {day = "0" + day;}
+  string = string + month + "-" + day;
+
+  return string;
+}
+
+// This step is for retrieving all exercises of a user in a week starting on the given date
+router.get('/:userId/:date/weekExercises', async (req, res) => {
+    try {
+        const { userId, date } = req.params;
+        const numericUserId = Number(userId);
+
+        if (!Number.isFinite(numericUserId)) {
+            return res.status(400).json({ error: 'Invalid userId format' });
+        }
+
+        let exercises = [];
+
+        //Convert the date string into a date object
+        let dateObj = new Date();
+        let splitDate = date.split("-");
+        splitDate[0] = parseInt(splitDate[0]);
+        splitDate[1] = parseInt(splitDate[1]) - 1;
+        splitDate[2] = parseInt(splitDate[2]);
+
+        dateObj.setFullYear(splitDate[0], splitDate[1], splitDate[2]);
+
+        // This step is for finding the workout of the user on the specific date
+        for (let i = 0; i < 7; i++)
+        {
+            let dateString = getDateString(dateObj);
+            console.log(dateString);
+            const workout = await Workout.findOne({ userId: numericUserId, date: dateString }).populate('exercises.exerciseId');
+            console.log(workout);
+            
+            if (!workout) {
+                exercises.push([]);
+                dateObj.setDate(dateObj.getDate() + 1);
+                continue;
+            }
+
+            console.log("Found workout!");
+            exercises.push(workout.exercises);
+            dateObj.setDate(dateObj.getDate() + 1);
+        }
+
+        // This step is for returning only exercises array
+        res.status(200).json({
+            exercises: exercises
+        });
+
+    } catch (error) {
+        console.error('Error fetching exercises for user starting on date:', error.message);
+        res.status(500).json({ error: 'Failed to retrieve exercises' });
     }
 });
 

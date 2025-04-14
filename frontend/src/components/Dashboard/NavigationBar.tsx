@@ -36,7 +36,7 @@ const container: CSSProperties = {
     flexDirection: "row",
     alignItems: "flex-start",
     backgroundColor: " #fff0f0",
-    borderColor: " #000000",
+    borderColor: "rgb(0, 0, 0)",
     borderWidth: "5px",
     borderStyle: "solid"
 }

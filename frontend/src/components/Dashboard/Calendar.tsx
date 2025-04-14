@@ -1,23 +1,9 @@
-import React, { CSSProperties, useEffect } from "react";
+import React, { CSSProperties, useEffect, useState } from "react";
 //import { useNavigate } from "react-router-dom";
 
-const date = new Date();
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "Feburary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const monthAbrreviations = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"]
-
-let days = new Array(7).fill("");
-let currentWeekOffset = 0;
-let selectedDate = new Date();
-let weekExcercises = [];
-
-let _ud : any = localStorage.getItem('user_data');
-let userId : any = null;
-if (_ud)
-{
-  let ud = JSON.parse( _ud );
-  userId = ud.userId;
-}
+const monthAbbreviations = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
 const app_name = 'powerleveling.xyz';
 function buildPath(route:string) : string
@@ -44,171 +30,153 @@ function getDateString(date : Date)
   return string;
 }
 
-// Handle Login
-async function loadWeekExercises(event:any) : Promise<void>
+function getSundayOfWeek(offset = 0)
 {
-  event.preventDefault();
-  
-  //Get the previous Sunday
-  let currentDay = date.getDay(); //Gets the offset from Sunday
-  let sunDate = new Date();
-  sunDate.setDate(date.getDate() - currentDay + 7 * currentWeekOffset);
-  let currentDate = new Date();
-  currentDate.setTime(sunDate.getTime());
+  const today = new Date();
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - today.getDay() + offset * 7);
+  return sunday;
+}
 
-  let exerciseHtmls = new Array<string>();
+interface CalendarProps
+{
+    date : string,
+    updateDate: (dateStr: string) => void,
+    index : number,
+    updateIndex: (index: number) => void,
+    panelVisible: boolean,
+    showPanel: (visibility: boolean) => void
+}
 
-  //Iterate over each day and generate an appropriate date string
-  for (let i = 0; i < 7; i++)
-  {
-    let dateString = getDateString(currentDate);
-
-    try
-    {
-        //Get the API response
-        if (userId == null)
-        {
-          alert("Unable to Load Excercises!");
-          return;
-        }
-
-        const response = await fetch(buildPath('api/workouts/' + userId + '/' + dateString + '/exercises'),
-        {method:'GET',headers:{'Content-Type':'application/json'}});
-        var res = JSON.parse(await response.text());
-
-        let htmlString = "<span>" + dayNames[i] + "</span><br><span>" + monthAbrreviations[currentDate.getMonth()] + " " + currentDate.getDate() + "</span><br>";
-        if (res.hasOwnProperty('exercises'))
-        {
-          weekExcercises = res.exercises;
-          for (let i = 0; i < res.exercises.length; i++) 
-          {
-            if (i >= 3) {break;}
-            htmlString += "<div class=\"calendarItem\"><span>" + 
-              res.exercises[i].exerciseId.name + "</span><br><span>" + res.exercises[i].reps + " " + res.exercises[i].sets + "</span></div>";
-          }
-        }
-        exerciseHtmls.push(htmlString);
-    }
-    catch(error:any)
-    {
-      alert(error.toString());
-      return;
-    }
-
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  //Set the month
-  let month = document.getElementById("month");
-  if (month != null) 
-  {
-    month.innerHTML = monthNames[sunDate.getMonth()] + " " + sunDate.getFullYear();
-  }
-
-  for (let i = 0; i < 7; i++)
-  {
-    //Update table values
-    let cell = document.getElementById("cell" + i);
-    if (cell != null)
-    {
-      cell.style.borderColor = " rgb(0, 0, 0)";
-      cell.style.borderWidth = "2px";
-      
-      cell.innerHTML = exerciseHtmls[i];
-      if (currentWeekOffset == 0 && i == currentDay)
-      {
-        cell.style.color =  "rgb(0, 0, 0)";
-        cell.style.background = "none";
-      }
-      else if (currentWeekOffset <= 0 && (currentWeekOffset < 0 || i < currentDay))
-      {
-        cell.style.color =  "rgb(57, 51, 51)";
-        cell.style.backgroundColor = "rgb(180, 168, 168)";
-      }
-      else
-      {
-        cell.style.color =  "rgb(0, 0, 0)";
-        cell.style.background = "none";
-      }
-
-      if (checkDateEquality(sunDate, selectedDate))
-      {
-        cell.style.borderColor = " #FFB202";
-        cell.style.borderWidth = "5px";
-      }
-    }
-
-    sunDate.setDate(sunDate.getDate() + 1); //Proceed to the next date
-  }
-};
-
-const Calendar: React.FC = () => {
-  //const navigate = useNavigate();
+const Calendar: React.FC<CalendarProps> = ({date, updateDate, index, updateIndex, panelVisible, showPanel}) => {
   // Hi - Jacob
+  // Salutations - Daniel
+  // Greetings - Stephen
+  const[weekOffset, setWeekOffset] = useState(0);
+  const[weekExcercises, setWeekExercises] = useState<any[][]>([[], [], [], [], [], [], []]);
+  const[startDate, setStartDate] = useState<Date>(getSundayOfWeek(0));
+  //const[loading, setLoading] = useState(false);
+
   useEffect(() => {
-    loadWeekExercises(currentWeekOffset);
-  }, []);
+    setStartDate(getSundayOfWeek(weekOffset));
+  }, [weekOffset]);
+
+  useEffect(() => {
+    const fetchExercises = async () => {
+      //setLoading(true);
+      const _userData = localStorage.getItem("user_data");
+      if (!_userData) {
+        alert("User not logged in.");
+        //setLoading(false);
+        return;
+      }
+      const userData = JSON.parse( _userData );
+      const userId = userData.userId;
+
+      const dateString = getDateString(startDate);
+
+      try {
+        const response = await fetch(buildPath(`api/workouts/${userId}/${dateString}/weekExercises`));
+        const data = await response.json();
+        setWeekExercises(data.exercises || [[], [], [], [], [], [], []]);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to fetch exercises.");
+      }
+
+      //setLoading(false);
+    };
+
+    fetchExercises();
+  }, [startDate, panelVisible]);
+
+  const handleAddClick = (date: Date) => {
+    updateDate(getDateString(date));
+    updateIndex(-1);
+    showPanel(true);
+  };
+
+  const compareDates = (date1 : Date, date2 : Date) =>
+  {
+    if (date1.getFullYear() < date2.getFullYear())
+    {
+      return -1;
+    }
+    else if (date1.getFullYear() > date2.getFullYear())
+    {
+      return 1;
+    }
+    
+    //Same year
+    if (date1.getMonth() < date2.getMonth())
+    {
+      return -1;
+    }
+    else if (date1.getMonth() > date2.getMonth())
+    {
+      return 1;
+    }
+
+    //Same year and month
+    if (date1.getDate() < date2.getDate())
+    {
+      return -1;
+    }
+    else if (date1.getDate() > date2.getDate())
+    {
+      return 1;
+    }
+    return 0;
+  }
 
   return (
     <div style = {outerContainer}>
-      <h1 id = "month" style = {month}></h1>
+      <h1 style = {month}>{monthNames[startDate.getMonth()]} {startDate.getFullYear()}</h1>
       <div style = {container}>
-        <button className="button" style={button} onClick={previousWeek}>&lt;</button>
+        <button className="button" style={button} onClick={() => setWeekOffset(prev => prev - 1)}>&lt;</button>
         <table style = {table}>
           <tbody><tr>
-              <td id = "cell0" className = "calendarCell" onClick = {function(){select(0)}}>Sun-{days[0]}</td>
-              <td id = "cell1" className = "calendarCell" onClick = {function(){select(1)}}>Mon-{days[1]}</td>
-              <td id = "cell2" className = "calendarCell" onClick = {function(){select(2)}}>Tue-{days[2]}</td>
-              <td id = "cell3" className = "calendarCell" onClick = {function(){select(3)}}>Wed-{days[3]}</td>
-              <td id = "cell4" className = "calendarCell" onClick = {function(){select(4)}}>Thu-{days[4]}</td>
-              <td id = "cell5" className = "calendarCell" onClick = {function(){select(5)}}>Fri-{days[5]}</td>
-              <td id = "cell6" className = "calendarCell" onClick = {function(){select(6)}}>Sat-{days[6]}</td>
-            </tr></tbody>
+              {weekExcercises.map((dayExercises, i) => {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(cellDate.getDate() + i);
+
+                //const isToday = compareDates(new Date(), cellDate) === 0;
+                const hasPassed = compareDates(new Date(), cellDate) > 0;
+                //const isSelected = date === getDateString(cellDate);
+
+                const cellStyle: React.CSSProperties = {
+                  border: compareDates(new Date(), cellDate) === 0 ? "5px solid #FFB202" : "2px solid black",
+                  backgroundColor: hasPassed ? "rgb(180, 168, 168)" : "white",
+                  color: hasPassed ? "rgb(57, 51, 51)" : "black",
+                  padding: "10px",
+                  textAlign: "center"
+                };
+
+                return (
+                  <td key={i} className = "calendarCell" style = {cellStyle}>
+                    <div>
+                      <strong>{dayNames[i]}</strong><br />
+                      <span>{monthAbbreviations[cellDate.getMonth()]} {cellDate.getDate()}</span>
+                    </div>
+
+                    <button onClick={() => handleAddClick(cellDate)}>+</button>
+
+                    {dayExercises.slice(0, 3).map((exercise: any, j: number) => (
+                      <div key={j} className="calendarItem">
+                        <span>{exercise.exerciseId.name}</span><br />
+                        <span>{exercise.reps} {exercise.sets}</span>
+                      </div>
+                    ))}
+                  </td>
+                );
+              })}
+          </tr></tbody>
         </table>
-        <button className="button" style={button} onClick={nextWeek}>&gt;</button>
+        <button className="button" style={button} onClick={() => setWeekOffset(prev => prev + 1)}>&gt;</button>
       </div>
     </div>
   );
 };
-
-function previousWeek(e : any) {
-  currentWeekOffset -= 1;
-  loadWeekExercises(e);
-}
-
-function nextWeek(e : any) {
-  currentWeekOffset += 1;
-  loadWeekExercises(e);
-}
-
-function select(cellNum : any)
-{
-  //Reset the formatting of the previously selected cell and update the new cell
-  let cell = document.getElementById("cell" + selectedDate.getDay());
-  if (cell != null)
-  {
-    cell.style.borderColor = " #000000";
-    cell.style.borderWidth = "2px";
-  }
-  let newCell = document.getElementById("cell" + cellNum);
-  if (newCell != null)
-  {
-    newCell.style.borderColor = " #FFB202";
-    newCell.style.borderWidth = "5px";
-  }
-
-  //Get the date object representing the date the user just clicked
-  selectedDate = new Date();
-  selectedDate.setDate(selectedDate.getDate() + currentWeekOffset * 7 + cellNum - date.getDay());
-}
-
-function checkDateEquality(date1 : Date, date2 : Date)
-{
-  if (date1.getDate() != date2.getDate()) {return false;}
-  if (date1.getMonth() != date2.getMonth()) {return false;}
-  if (date1.getFullYear() != date2.getFullYear()) {return false;}
-  return true;
-}
 
 const outerContainer: CSSProperties = {
   justifyContent: "left"
