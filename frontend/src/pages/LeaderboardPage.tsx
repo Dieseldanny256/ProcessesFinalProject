@@ -21,16 +21,50 @@ const LeaderboardPage: React.FC = () => {
 
   // functions
   const [powerLevel, setPowerLevel] = useState(0);
-  const [TopPowerLevels, SetTopPowerLevels] = useState<any[]>([]);
+  const [TopPowerLevels, setTopPowerLevels] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
-  const isUserRow = (entry: any) => entry.userId === userData.userId;
-  const [friendsLoaded, setFriendsLoaded] = useState(false);
-  const [globalLoaded, setGlobalLoaded] = useState(false);
+  const isUserRow = (entry: any) => entry.userId === userId;
+
   const [displayName, setDisplay] = useState<string>('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [userRank, setUserRank] = useState(0);
+
+  const [friendsLoaded, setFriendsLoaded] = useState(false);
+
+  useEffect(() => {
+    const resetAndFetch = async () => {
+      setTopPowerLevels([]);
+      setFriends([]);
+      setPage(1);
+      setHasMore(true);
+  
+      setTimeout(() => {
+        fetchData(1);
+      }, 0);
+    };
+  
+    resetAndFetch();
+  }, [isGlobal]);
+
+  // getProfile API
+  useEffect(() => {
+    async function getProfile(): Promise<void> {
+      const response = await fetch('http://localhost:5000/api/getProfile', { // change URL for actual website
+        method: 'POST', 
+        body: JSON.stringify({ userId: userId }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      let res = JSON.parse(await response.text());
+
+      setDisplay(res.profile.displayName);
+      setPowerLevel(res.profile.powerlevel);
+    }
+
+    getProfile();
+  }, [userId]);
 
   useEffect(() => {
     if (!isGlobal && !friendsLoaded) {
@@ -57,123 +91,77 @@ const LeaderboardPage: React.FC = () => {
     }
   }, [isGlobal, friendsLoaded, userId, powerLevel, userData.displayName]);
   
-  // getProfile API - to get powerlevel, and rank soon?
-  useEffect(() => {
-    async function getProfile(): Promise<void> {
-      let obj = { userId: userId };
-      let js = JSON.stringify(obj);
-
-      console.log('getting user profile');
-
-      const response = await fetch('http://localhost:5000/api/getProfile', { // change URL for actual website
-        method: 'POST', 
-        body: js,
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      let txt = await response.text();
-      let res = JSON.parse(txt);
-
-      setDisplay(res.profile.displayName);
-      setPowerLevel(res.profile.powerlevel);
-    }
-
-    getProfile();
-  }, [userId]);
-
-  // getTopPowerlevels API - for leaderboard, needs better solution.
-  useEffect(() => {
-    async function getTopPowerlevels(): Promise<void> {
-      let obj = { userId: userId };
-      let js = JSON.stringify(obj);
-
-      console.log('getting top profiles');
-
-      const response = await fetch('http://localhost:5000/api/getTopPowerlevels', {
-        method: 'POST',
-        body: js,
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      let txt = await response.text();
-      let res = JSON.parse(txt);
-      setUserRank(res.userRank);
-      const cappedTopProfiles = res.topProfiles.map((profile: any) => ({
-        ...profile,
-        rank: Math.max(0, Math.min(100, profile.rank)),
-      }));
-      
-      SetTopPowerLevels(cappedTopProfiles);
-      setGlobalLoaded(true);
-    }
-
-    getTopPowerlevels();
-  }, [userId]);
-
-  const handleMouseEnter = (index: number) => {
-    setHoveredRow(index);
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredRow(null);
-  };
-
-  const fetchData = async () => {
+  // lazy fetch leaderboard
+  const fetchData = async (fetchPage = page) => {
     if (loading || !hasMore) return;
     setLoading(true);
   
     const endpoint = isGlobal ? '/api/getTopPowerlevels' : '/api/getTopFriendPowerLevels';
-    const response = await fetch(`http://localhost:5000${endpoint}`, {
-      method: 'POST',
-      body: JSON.stringify({ userId, page }),
-      headers: { 'Content-Type': 'application/json' },
-    });
   
-    const res = await response.json();
+    try {
+      const response = await fetch(`http://localhost:5000${endpoint}`, {
+        method: 'POST',
+        body: JSON.stringify({ userId, page: fetchPage }),
+        headers: { 'Content-Type': 'application/json' },
+      });
   
-    if (res.error) {
-      console.error(res.error);
+      const res = await response.json();
+  
+      if (res.error) {
+        console.error(res.error);
+        return;
+      }
+  
+      const newProfiles = res.topProfiles.map((profile: any, index: number) => ({
+        ...profile,
+        rank: (fetchPage - 1) * 10 + index + 1,
+      }));
+  
+      if (isGlobal) {
+        setTopPowerLevels(prev => fetchPage === 1 ? newProfiles : [...prev, ...newProfiles]);
+        setUserRank(res.userRank ?? 0);
+      } else {
+        setFriends(prev => fetchPage === 1 ? newProfiles : [...prev, ...newProfiles]);
+      }
+  
+      setHasMore(newProfiles.length === 10);
+      setPage(prev => fetchPage + 1);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
       setLoading(false);
-      return;
     }
-  
-    const newProfiles = res.topProfiles.map((profile: any, index: number) => ({
-      ...profile,
-      rank: (page - 1) * 10 + index + 1,
-    }));
-  
-    if (isGlobal) {
-      SetTopPowerLevels(prev => [...prev, ...newProfiles]);
-    } else {
-      setFriends(prev => [...prev, ...newProfiles]);
-    }
-  
-    setHasMore(newProfiles.length === 10);
-    setPage(prev => prev + 1);
-    setLoading(false);
   };
 
+  useEffect(() => {
+    fetchData();
+  }, [userId, isGlobal]);
+
+  // lazy load on scroll
   useEffect(() => {
     const handleScroll = () => {
       const scrollArea = scrollAreaRef.current;
       if (!scrollArea) return;
-  
+
       if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 100) {
         fetchData();
       }
     };
-  
+
     const scrollArea = scrollAreaRef.current;
     if (scrollArea) {
       scrollArea.addEventListener('scroll', handleScroll);
     }
-  
+
     return () => {
       if (scrollArea) {
         scrollArea.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [fetchData]); 
+  }, [fetchData]);
+
+  const handleMouseEnter = (index: number) => setHoveredRow(index);
+  const handleMouseLeave = () => setHoveredRow(null);
 
   // main return
   return (
@@ -214,9 +202,6 @@ const LeaderboardPage: React.FC = () => {
 
           {/* Global Leaderboard */}
           {isGlobal ? (
-            !globalLoaded ? (
-              <div style={loadingStyle}>Loading Global Leaderboard...</div>
-            ) : (
               TopPowerLevels.sort((a, b) => b.powerlevel - a.powerlevel).map((entry, index) => (
                 <Link to={`/profile/${entry.userId}`} key={index} style={{ textDecoration: 'none' }}>
                   <div
@@ -235,7 +220,7 @@ const LeaderboardPage: React.FC = () => {
                     <div style={columnStyle('transparent')}>{entry.powerlevel}</div>
                   </div>
                 </Link>
-              ))
+              )
             )
           ) : (
             // Friends Leaderboard
@@ -288,11 +273,12 @@ const loadingStyle: React.CSSProperties = {
 
 // header
 const header: React.CSSProperties = {
+  userSelect: 'none',
   backgroundColor: '#BA0000',
   color: 'white',
   justifyContent: 'space-between',
   alignItems: 'center',
-  fontSize: '100px',
+  fontSize: '10vh',
   fontFamily: 'microgramma-extended, sans-serif',
   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.5)',
   width: '100%',
@@ -302,20 +288,14 @@ const header: React.CSSProperties = {
   left: 0,
   zIndex: 2,
   borderBottom: '5px solid black',
-  userSelect: 'none',
-};
-
-const backArrowStyle: React.CSSProperties = {
-  color: 'white',
 };
 
 const leftHeader: React.CSSProperties = {
-  fontSize: '80px',
+  fontSize: '8vh',
   color: 'white',
-  marginLeft: '50px',
-  marginTop: '55px',
+  marginLeft: '5vh',
+  marginTop: '2%',
   width: '2.5%',
-  height: '40%',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
@@ -324,24 +304,31 @@ const leftHeader: React.CSSProperties = {
 const centerHeader: React.CSSProperties = {
   position: 'absolute',
   top: 0,
-  left: '10%',
+  left: '8%',
   transform: 'translateX(0)',
   width: 'auto',
   padding: '8px',
   fontFamily: '"microgramma-extended", sans-serif',
   fontWeight: 700,
   fontStyle: 'normal',
-  fontSize: '70px',
+  fontSize: '7vh',
   letterSpacing: '5px',
-  marginTop: '25px',
+  marginTop: '2%',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 };
 
 const logo: React.CSSProperties = {
   position: 'absolute',
-  top: 0,
+  top: '25%',
   left: '90%',
-  width: '100px',
-  marginTop: '40px',
+  width: '10vh',
+};
+
+const backArrowStyle: React.CSSProperties = {
+  color: 'white',
+  zIndex: 3,
 };
 
 // leaderboard

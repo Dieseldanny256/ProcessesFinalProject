@@ -2,8 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Radar } from 'react-chartjs-2';
 import { Link, useNavigate } from 'react-router-dom';
 import GreyBackground from '../components/Images/GreyBackground.tsx'; 
-import profileImage from '../assets/profile.png';
 import logoImage from '../assets/logo.png';
+
+import profile1 from '../assets/profile1.png';
+import profile2 from '../assets/profile2.png';
+import profile3 from '../assets/profile3.png';
+import profile4 from '../assets/profile4.png';
+import profile5 from '../assets/profile5.png';
+import profile6 from '../assets/profile6.png';
+import profile7 from '../assets/TheHolyOne.png';
 
 // make the chart work
 import {
@@ -34,21 +41,32 @@ ChartJS.register(
 );
 
 const ProfilePage: React.FC = () => {
+  const profilePictures = [profile1, profile2, profile3, profile4, profile5, profile6, profile7];
+
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalPictureOpen, setIsModalPictureOpen] = useState(false);
+  
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<{ displayName: string; userId: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{profilePicture: number; displayName: string; userId: string }[]>([]);
+  
   const [powerLevel, setPowerLevel] = useState(0);
   const [stats, setStats] = useState<number[]>([]);
-  const [friends, setFriends] = useState<{ displayName: string; profileImage: string; powerlevel: number; userId: number}[]>([]);
-  const [loadingFriends, setLoadingFriends] = useState(true);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [hoveredIndexModal, setHoveredIndexModal] = useState<number | null>(null);
-  const [displayName, setDisplay] = useState<string>('');
-  const [requestResults, setRequestResults] = useState<{ displayName: string; profileImage: string; userId: number}[]>([]);
-  const navigate = useNavigate();
+  const [profilePicture, setProfilePicture] = useState<number>(0);
 
+  const [friends, setFriends] = useState<{ displayName: string; profileImage: string; powerlevel: number; userId: number; profilePicture: number}[]>([]);
+  const [displayName, setDisplay] = useState<string>('');
+  const [requestResults, setRequestResults] = useState<{ displayName: string; profilePicture: number; userId: number}[]>([]);
   const [friendRequestsSent, setFriendRequestsSent] = useState<number[]>([]);
   const [friendIds, setFriendIds] = useState<number[]>([]);
+
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredIndexModal, setHoveredIndexModal] = useState<number | null>(null);
+  
+  const [loadingFriends, setLoadingFriends] = useState(true);
+
+  const [selectedPictureIndex, setSelectedPictureIndex] = useState<number | null>(null);
+  const [confirmationMessage, setConfirmationMessage] = useState('');
 
   const _ud = localStorage.getItem('user_data');
   
@@ -81,10 +99,35 @@ const ProfilePage: React.FC = () => {
     let txt = await response.text();
     let res = JSON.parse(txt);
 
+    setProfilePicture(res.profile.profilePicture);
     setDisplay(res.profile.displayName);
     setStats(res.profile.stats || []);
     setPowerLevel(res.profile.powerlevel);
   }
+
+  async function updateProfilePicture(pictureIndex: number): Promise<void> {
+    const obj = {
+      userId: userId,
+      profilePicture: pictureIndex,
+    };
+  
+    const js = JSON.stringify(obj);
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/updateProfilePicture', {
+        method: 'POST',
+        body: js,
+        headers: { 'Content-Type': 'application/json' },
+      });
+  
+      if (!response.ok) throw new Error('Failed to update profile picture');
+  
+      setProfilePicture(pictureIndex);
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+    }
+  }
+  
 
   async function searchFriends(): Promise<void> {
     let obj = { userId: userId };
@@ -200,6 +243,28 @@ const ProfilePage: React.FC = () => {
     setIsModalOpen(false);
   };
 
+  const handleOpenModalPicture = () => {
+    setIsModalPictureOpen(true);
+  };
+
+  const handleCloseModalPicture = () => {
+    setIsModalPictureOpen(false);
+    setSelectedPictureIndex(null);
+    setConfirmationMessage('');
+  };
+
+  const handlePictureSelect = (index: number) => {
+    setSelectedPictureIndex(index);
+    setConfirmationMessage('Profile Picture Changed');
+
+    updateProfilePicture(index)
+
+    setTimeout(() => {
+      setConfirmationMessage('');
+    }, 2000);
+  };
+  
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(event.target.value);
   };
@@ -215,6 +280,19 @@ const ProfilePage: React.FC = () => {
     const userData = JSON.parse(_ud);
 
     userId = userData.userId;
+  };
+
+  const pulseAnimation = `
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  `;
+
+  const dynamicExclamationStyle = {
+    ...exclamationMarkStyle,
+    animation: 'pulse 1s infinite',
   };
 
   const refresh = async () => {
@@ -281,7 +359,6 @@ const ProfilePage: React.FC = () => {
     refreshModalRequests();
   };
   
-
   const acceptFriendRequest = async(friendUserId: Number) => {
     await fetch('http://localhost:5000/api/addFriend', {
       method: 'POST',
@@ -305,7 +382,7 @@ const ProfilePage: React.FC = () => {
           }}
           onClick={() => navigate("/dashboard")}
         >
-          <div style={backArrowStyle}>&lt;</div> {/* replaced <Link> with a styled div */}
+          <div style={backArrowStyle}>&lt;</div>
         </div>
         <div style={centerHeader}>
           {displayName}
@@ -317,7 +394,10 @@ const ProfilePage: React.FC = () => {
       <GreyBackground />
 
       <div style={leftSection}>
-        <img src={profileImage} alt="Profile" style={profileImageStyle} />
+        <img src={profilePictures[profilePicture]} alt="Profile" style={profileImageStyle} />
+        <button onClick={handleOpenModalPicture} style={editButtonStyle}>
+          Edit
+        </button>
         <div style={hexagonWrapper}>
           <div style={blackOutline}></div>
           <div style={labelBackground}></div>
@@ -331,7 +411,17 @@ const ProfilePage: React.FC = () => {
       <div style={rightSection}>
         <div style={friendHeader}>
           <h1>Friends</h1>
-          <button onClick={handleOpenModal} style={plusButtonStyle}>+</button>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <button onClick={handleOpenModal} style={plusButtonStyle}>
+              +
+            </button>
+            {requestResults.length > 0 && (
+              <div>
+                <style>{pulseAnimation}</style>
+                <span style={dynamicExclamationStyle}>!</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={friendListContainer}>
@@ -355,7 +445,7 @@ const ProfilePage: React.FC = () => {
                 >
                   <div style={friendImageWrapper}>
                     <img 
-                      src={friend.profileImage || profileImage} 
+                      src={profilePictures[friend.profilePicture] || profilePictures[0]} 
                       alt="Friend" 
                       style={friendProfileImageStyle} 
                     />
@@ -392,10 +482,11 @@ const ProfilePage: React.FC = () => {
               </button>
               <div style={searchArea}>
                 {searchResults.length > 0 ? (
-                  searchResults.map((result, index) => {
+                  searchResults
+                    .filter(result => Number(result.userId) !== Number(userId))
+                    .map((result, index) => {
                     const isRequestSent = friendRequestsSent.includes(Number(result.userId));
                     const isAlreadyFriend = friendIds.includes(Number(result.userId));
-
 
                     return (
                       <div
@@ -420,7 +511,7 @@ const ProfilePage: React.FC = () => {
                         >
                           <div style={modalImageWrapper}>
                             <img
-                              src={profileImage}
+                              src={profilePictures[result.profilePicture]}
                               alt="Friend"
                               style={friendProfileImageStyle}
                             />
@@ -494,7 +585,7 @@ const ProfilePage: React.FC = () => {
                       >
                         <div style={modalImageWrapper}>
                           <img
-                            src={profileImage}
+                            src={profilePictures[result.profilePicture]}
                             alt="Friend"
                             style={friendProfileImageStyle}
                           />
@@ -539,36 +630,179 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       )}
+      {isModalPictureOpen && (
+        <div style={modalOverlay}>
+          <div style={modalContent}>
+            <div style={pictureTitle}>
+              <h1>Select Profile Picture</h1>
+            </div>
+            <div style={pictureSearchArea}>
+              {profilePictures.slice(0, 6).map((src, index) => (
+                <div
+                  key={index}
+                  style={{
+                    position: 'absolute',
+                    left: `${26.5 + (index % 3) * 32}%`,
+                    top: `${32 + Math.floor(index / 3) * 35}%`,
+                    textAlign: 'center',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 9,
+                  }}
+                >
+                  <img
+                    src={src}
+                    alt={`Profile ${index}`}
+                    style={{
+                      ...pictures,
+                      border: selectedPictureIndex === index ? '6px solid #28a745' : pictures.border,
+                    }}
+                  />
+                  <button
+                    style={{...selectButtonStyle, backgroundColor: selectedPictureIndex === index ? '6px solid #28a745' : 'rgb(43, 43, 43)'}}
+                    onClick={() => handlePictureSelect(index)}
+                  >
+                    Select
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {confirmationMessage && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '12.5%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  fontSize: '2vh',
+                  color: '#00AA00',
+                  backgroundColor: 'white',
+                  padding: '1vh 2vh',
+                  zIndex: 20,
+                }}
+              >
+                {confirmationMessage}
+              </div>
+            )}
+
+            <button
+              onClick={handleCloseModalPicture}
+              style={{
+                position: 'absolute',
+                bottom: '5%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '2vh',
+                backgroundColor: '#BA0000',
+                color: 'white',
+                border: '3px solid #ccc',
+                borderRadius: '8px',
+                padding: '1vh 3vh',
+                cursor: 'pointer',
+              }}
+            >
+              Quit
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
+};
+
+// pivture modal
+const pictureSearchArea: React.CSSProperties = {
+  height: '47vh',
+  width: '56vh',
+  marginLeft: '-20%',
+  overflowY: 'auto',
+  backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  border: '1px solid #ccc',
+  borderRadius: '8px',
+};
+
+const selectButtonStyle: React.CSSProperties = {
+  transform: 'translate(-50%, -50%)',
+  marginTop: '180%',
+  backgroundColor: '#28a745',
+  color: 'white',
+  fontSize: '2vh',
+  paddingLeft: '1vh',
+  paddingRight: '1vh',
+  paddingTop: '0.6vh',
+  paddingBottom: '0.6vh',
+  cursor: 'pointer',
+  border: '3px solid #ccc',
+  zIndex: 10,
+};
+
+const pictureTitle: React.CSSProperties = {
+  position: 'absolute',
+  color: '#000',
+  fontSize: '1vh',
+  left: '18%',
+  top: '1%',
+};
+
+const pictures: React.CSSProperties = {
+  width: '15vh',
+  height: '15vh',
+  position: 'absolute',
+  borderRadius: '50%',
+  objectFit: 'cover',
+  margin: '0 auto',
+  border: '6px solid #ccc',
+  boxShadow: '0 0 5px rgba(0, 0, 0, 0.81)',
+  transform: 'translateX(-50%)', 
+};
+
+const exclamationMarkStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: '-10px',
+  right: '-10px',
+  backgroundColor: 'red',
+  color: 'white',
+  fontWeight: 'bold',
+  borderRadius: '50%',
+  width: '20px',
+  height: '20px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '14px',
+  animation: 'pulse 1.5s infinite',
+  boxShadow: '0 0 5px rgba(0,0,0,0.3)',
+  zIndex: 2,
 };
 
 const sendRequestButton: React.CSSProperties = {
   backgroundColor: '#28a745',
   color: 'white',
-  padding: '15px 15px',
+  padding: '1vh 0.5vh',
   borderRadius: '8px',
-  marginRight: '10px',
+  marginRight: '1vh',
   cursor: 'pointer',
   boxShadow: '0px 5px 5px rgba(0, 0, 0, 0.27)',
-  marginLeft: '6px',
+  marginLeft: '0.1vh',
   border: '4px solid rgba(0, 0, 0, 0.18)',
-  width: '24%',
+  width: '20%',
+  marginTop: '1%',
 };
 
 const searchTitle: React.CSSProperties = {
   position: 'absolute',
   color: '#000',
-  fontSize: '10px',
+  fontSize: '1vh',
   left: '20%',
-  top: '-10px',
+  top: '1%',
 };
 
 const requestsTitle: React.CSSProperties = {
   position: 'absolute',
   color: '#000',
-  fontSize: '30px',
+  fontSize: '3vh',
   left: '25%',
+  top: '4%',
 };
 
 const searchComment: React.CSSProperties = {
@@ -583,23 +817,23 @@ const modalItem: React.CSSProperties = {
   color: 'rgb(48, 48, 48)',
   display: 'flex',
   alignItems: 'center',
-  padding: '10px 20px',
-  fontSize: '20px',
+  padding: '1vh 2vh',
+  fontSize: '2.5vh',
   cursor: 'pointer',
   transition: 'background-color 0.3s ease',
   border: '1px solid #ccc',
   borderRadius: '8px',
-  marginLeft: '10px',
-  marginRight: '10px',
+  marginLeft: '1vh',
+  marginRight: '1vh',
   marginBottom: '0',
-  marginTop: '5px',
+  marginTop: '0.5vh',
   width: '75%',
   boxShadow: '0px 5px 5px rgba(0, 0, 0, 0.27)',
 };
 
 const modalImageWrapper: React.CSSProperties = {
-  width: '40px',
-  height: '40px',
+  width: '5vh',
+  height: '4.2vh',
   borderRadius: '50%',
   overflow: 'hidden',
   marginRight: '15px',
@@ -632,7 +866,7 @@ const bottomModal: React.CSSProperties = {
   height: '35%',
   width: '100%',
   left: '0',
-  top: '450px',
+  top: '63%',
   display: 'flex',
   zIndex: 2,
   borderTop: '5px solid #000',
@@ -670,8 +904,8 @@ const modalContent: React.CSSProperties = {
   backgroundColor: 'white',
   padding: '100px',
   borderRadius: '8px',
-  width: '400px',
-  height: '500px',
+  width: '40vh',
+  height: '50vh',
   boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
   border: '5px solid black'
 };
@@ -694,34 +928,36 @@ const searchInputStyle: React.CSSProperties = {
   height: '5%',
   left: '3%',
   top: '15%',
-  padding: '5px',
+  padding: '0.5vh',
   border: '1px solid #000',
   borderRadius: '4px',
   backgroundColor: 'rgb(48,48, 48)',
 };
 
 const searchButtonStyle: React.CSSProperties = {
-  position: 'absolute',
+  position: 'relative',
   backgroundColor: '#28a745',
-  left: '70%',
-  top: '14.5%',
+  left: '65%',
+  top: '15%',
   color: 'white',
-  padding: '7px',
+  padding: '0.7vh',
   borderRadius: '4px',
   border: 'none',
   cursor: 'pointer',
+  height: '4vh',
 };
 
 const closeModalButtonStyle: React.CSSProperties = {
   backgroundColor: '#dc3545',
-  left: '85%',
-  top: '14.5%',
+  left: '68%',
+  top: '15%',
   color: 'white',
-  padding: '7px',
+  padding: '0.7vh',
   borderRadius: '4px',
+  height: '4vh',
   border: 'none',
   cursor: 'pointer',
-  position: 'absolute',
+  position: 'relative',
 };
 
 // right section aka friend area
@@ -785,7 +1021,7 @@ const friendHeader: React.CSSProperties = {
 };
 
 const friendListContainer: React.CSSProperties = {
-  height: '600px',
+  height: '65vh',
   width: '85%',
   overflowY: 'auto',
   backgroundColor: 'rgba(0, 0, 0, 0.1)',
@@ -803,18 +1039,34 @@ const friendList: React.CSSProperties = {
 const plusButtonStyle: React.CSSProperties = {
   backgroundColor: '#BA0000',
   color: 'white',
-  fontSize: '20px',
-  paddingLeft: '10px',
-  paddingRight: '10px',
-  paddingTop: '6px',
-  paddingBottom: '6px',
+  marginTop:'5%',
+  fontSize: '2.5vh',
+  paddingLeft: '1vh',
+  paddingRight: '1vh',
+  paddingTop: '0.6vh',
+  paddingBottom: '0.6vh',
   cursor: 'pointer',
   border: '3px solid #ccc',
 };
 
+const editButtonStyle: React.CSSProperties = {
+  backgroundColor: 'rgb(201, 201, 201)',
+  color: 'rgb(0, 0, 0)',
+  letterSpacing: '1px',
+  position: 'relative',
+  top: '24%',
+  fontSize: '2.2vh',
+  paddingLeft: '1vh',
+  paddingRight: '1vh',
+  paddingTop: '0.1vh',
+  paddingBottom: '0.1vh',
+  cursor: 'pointer',
+  border: '3px solid #000',
+};
+
 const friendImageWrapper: React.CSSProperties = {
-  width: '40px',
-  height: '40px',
+  width: '5vh',
+  height: '4.2vh',
   borderRadius: '50%',
   overflow: 'hidden',
   marginRight: '15px',
@@ -835,10 +1087,10 @@ const noFriendsStyle: React.CSSProperties = {
 
 const powerLevelTextStyle: React.CSSProperties = {
   position: 'absolute',
-  top: '120px',  
+  top: '70%',  
   left: '8.6%',
   fontFamily: '"microgramma-extended", sans-serif',
-  fontSize: '30px',
+  fontSize: '3vh',
   color: 'rgb(230, 230, 230)',
 };
 
@@ -847,7 +1099,6 @@ const leftSection: React.CSSProperties = {
   color: 'white',
   justifyContent: 'space-between',
   alignItems: 'center',
-  fontSize: '20px',
   fontFamily: 'microgramma-extended, sans-serif',
   width: '33.33%',
   height: '100%',
@@ -858,8 +1109,8 @@ const leftSection: React.CSSProperties = {
 };
 
 const profileImageStyle: React.CSSProperties = {
-  width: 'clamp(30px, 30vw, 300px)',
-  height: 'clamp(30px, 30vw, 300px)',
+  width: '30vh',
+  height: '30vh',
   position: 'absolute',
   borderRadius: '50%',
   objectFit: 'cover',
@@ -873,9 +1124,9 @@ const profileImageStyle: React.CSSProperties = {
 // chart
 const hexagonWrapper: React.CSSProperties = {
   position: 'relative',
-  top: '300px',
-  width: 'clamp(28px, 28vw, 280px)',
-  height: 'clamp(32.5px, 32.5vw, 325px)',
+  top: '30%',
+  width: '28vh',
+  height: '32vh',
   left: '50%',
   transform: 'translateX(-50%)', 
 };
@@ -934,7 +1185,7 @@ const header: React.CSSProperties = {
   color: 'white',
   justifyContent: 'space-between',
   alignItems: 'center',
-  fontSize: '100px',
+  fontSize: '10vh',
   fontFamily: 'microgramma-extended, sans-serif',
   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.5)',
   width: '100%',
@@ -947,12 +1198,11 @@ const header: React.CSSProperties = {
 };
 
 const leftHeader: React.CSSProperties = {
-  fontSize: '80px',
+  fontSize: '8vh',
   color: 'white',
-  marginLeft: '50px',
-  marginTop: '55px',
+  marginLeft: '5vh',
+  marginTop: '2%',
   width: '2.5%',
-  height: '40%',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
@@ -968,9 +1218,9 @@ const centerHeader: React.CSSProperties = {
   fontFamily: '"microgramma-extended", sans-serif',
   fontWeight: 700,
   fontStyle: 'normal',
-  fontSize: '70px',
+  fontSize: '7vh',
   letterSpacing: '5px',
-  marginTop: '25px',
+  marginTop: '1.5%',
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -978,10 +1228,9 @@ const centerHeader: React.CSSProperties = {
 
 const logo: React.CSSProperties = {
   position: 'absolute',
-  top: 0,
+  top: '25%',
   left: '90%',
-  width: '100px',
-  marginTop: '40px',
+  width: '10vh',
 };
 
 const backArrowStyle: React.CSSProperties = {

@@ -1,9 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Radar } from 'react-chartjs-2';
 import GreyBackground from '../components/Images/GreyBackground.tsx'; 
-import profileImage from '../assets/profile-pic.png';
 import logoImage from '../assets/logo.png';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+
+import profile1 from '../assets/profile1.png';
+import profile2 from '../assets/profile2.png';
+import profile3 from '../assets/profile3.png';
+import profile4 from '../assets/profile4.png';
+import profile5 from '../assets/profile5.png';
+import profile6 from '../assets/profile6.png';
+import profile7 from '../assets/TheHolyOne.png';
 
 // make the chart work
 import {
@@ -34,10 +41,12 @@ ChartJS.register(
 );
 
 const OtherProfilePage: React.FC = () => {
+  const profilePictures = [profile1, profile2, profile3, profile4, profile5, profile6, profile7];
   const [powerLevel, setPowerLevel] = useState(0);
+  const [profilePicture, setProfilePicture] = useState<number>(0);
   const [stats, setStats] = useState(0);
   const [displayName, setDisplay] = useState<string>('');
-  const [friends, setFriends] = useState<{ displayName: string; profileImage: string; powerlevel: number; userId: number}[]>([]);
+  const [friends, setFriends] = useState<{profilePicture: number; displayName: string; profileImage: string; powerlevel: number; userId: number}[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -56,7 +65,8 @@ const OtherProfilePage: React.FC = () => {
 
       let txt = await response.text();
       let res = JSON.parse(txt);
-    
+      
+      setProfilePicture(res.profile.profilePicture);
       setDisplay(res.profile.displayName);
       setStats(res.profile.stats);
       setPowerLevel(res.profile.powerlevel);
@@ -163,18 +173,18 @@ const OtherProfilePage: React.FC = () => {
   return (
     <div>
       <header style={header}>
-        <div style={leftHeader} 
-            onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-            }}>
-            <button onClick={handleBackClick} style={backArrowStyle}>
-                &lt;
-            </button>
+        <div
+          style={{...leftHeader, cursor: 'pointer'}}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          onClick={() => handleBackClick()}
+        >
+          <div style={backArrowStyle}>&lt;</div>
         </div>
-        
         <div style={centerHeader}>
           {displayName}
         </div>
@@ -185,7 +195,7 @@ const OtherProfilePage: React.FC = () => {
       <GreyBackground />
 
       <div style={leftSection}>
-        <img src={profileImage} alt="Profile" style={profileImageStyle} />
+        <img src={profilePictures[profilePicture]} alt="Profile" style={profileImageStyle} />
         <div style={hexagonWrapper}>
           <div style={blackOutline}></div>
           <div style={labelBackground}></div>
@@ -222,7 +232,7 @@ const OtherProfilePage: React.FC = () => {
                 >
                   <div style={friendImageWrapper}>
                     <img 
-                      src={friend.profileImage || profileImage} 
+                      src={profilePictures[friend.profilePicture] || profilePictures[0]} 
                       alt="Friend" 
                       style={friendProfileImageStyle} 
                     />
@@ -320,8 +330,8 @@ const friendList: React.CSSProperties = {
 };
 
 const friendImageWrapper: React.CSSProperties = {
-  width: '40px',
-  height: '40px',
+  width: '5vh',
+  height: '4.2vh',
   borderRadius: '50%',
   overflow: 'hidden',
   marginRight: '15px',
@@ -342,10 +352,10 @@ const noFriendsStyle: React.CSSProperties = {
 
 const powerLevelTextStyle: React.CSSProperties = {
   position: 'absolute',
-  top: '120px',  
+  top: '70%',  
   left: '8.6%',
   fontFamily: '"microgramma-extended", sans-serif',
-  fontSize: '30px',
+  fontSize: '3vh',
   color: 'rgb(230, 230, 230)',
 };
 
@@ -354,7 +364,6 @@ const leftSection: React.CSSProperties = {
   color: 'white',
   justifyContent: 'space-between',
   alignItems: 'center',
-  fontSize: '20px',
   fontFamily: 'microgramma-extended, sans-serif',
   width: '33.33%',
   height: '100%',
@@ -365,8 +374,8 @@ const leftSection: React.CSSProperties = {
 };
 
 const profileImageStyle: React.CSSProperties = {
-  width: 'clamp(30px, 30vw, 300px)',
-  height: 'clamp(30px, 30vw, 300px)',
+  width: '30vh',
+  height: '30vh',
   position: 'absolute',
   borderRadius: '50%',
   objectFit: 'cover',
@@ -380,9 +389,9 @@ const profileImageStyle: React.CSSProperties = {
 // chart
 const hexagonWrapper: React.CSSProperties = {
   position: 'relative',
-  top: '300px',
-  width: 'clamp(28px, 28vw, 280px)',
-  height: 'clamp(32.5px, 32.5vw, 325px)',
+  top: '30%',
+  width: '28vh',
+  height: '32vh',
   left: '50%',
   transform: 'translateX(-50%)', 
 };
@@ -441,7 +450,7 @@ const header: React.CSSProperties = {
   color: 'white',
   justifyContent: 'space-between',
   alignItems: 'center',
-  fontSize: '100px',
+  fontSize: '10vh',
   fontFamily: 'microgramma-extended, sans-serif',
   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.5)',
   width: '100%',
@@ -454,12 +463,11 @@ const header: React.CSSProperties = {
 };
 
 const leftHeader: React.CSSProperties = {
-  fontSize: '80px',
+  fontSize: '8vh',
   color: 'white',
-  marginLeft: '50px',
-  marginTop: '55px',
+  marginLeft: '5vh',
+  marginTop: '2%',
   width: '2.5%',
-  height: '40%',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
@@ -475,9 +483,9 @@ const centerHeader: React.CSSProperties = {
   fontFamily: '"microgramma-extended", sans-serif',
   fontWeight: 700,
   fontStyle: 'normal',
-  fontSize: '70px',
+  fontSize: '7vh',
   letterSpacing: '5px',
-  marginTop: '25px',
+  marginTop: '1.5%',
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -485,22 +493,14 @@ const centerHeader: React.CSSProperties = {
 
 const logo: React.CSSProperties = {
   position: 'absolute',
-  top: 0,
+  top: '25%',
   left: '90%',
-  width: '100px',
-  marginTop: '40px',
+  width: '10vh',
 };
 
 const backArrowStyle: React.CSSProperties = {
-    color: 'white',
-    backgroundColor: 'transparent',
-    border: 'none',
-    fontSize: '80px',
-    padding: '5px',
-    zIndex: 3,
-    cursor: 'pointer',
-    outline: 'transparent',
-  };
-  
+  color: 'white',
+  zIndex: 3,
+};
 
 export default OtherProfilePage;

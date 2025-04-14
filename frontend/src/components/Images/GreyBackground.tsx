@@ -1,4 +1,4 @@
-import GreyBackgroundImg from '../../assets/BackGround_Dots1.png'; // Path to your image
+import GreyBackgroundImg from '../../assets/BackGround_Dots1.png';
 
 function GreyBackground() {
   return (
