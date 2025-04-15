@@ -1,4 +1,4 @@
-import GreyBackgroundImg from '../../assets/BackGround_Dots1.png';
+import GreyBackgroundImg from '../../assets/dotsFixed.png';
 
 function GreyBackground() {
   return (
