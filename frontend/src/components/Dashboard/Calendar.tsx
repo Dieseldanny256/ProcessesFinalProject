@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useState } from "react";
+import React, { CSSProperties, useEffect, useState, useRef } from "react";
 import dots from "../../assets/dots.png";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -57,6 +57,9 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
   const [slidePanelPosition, setSlidePanelPosition] = useState({ left: 0, top: 0 });
 
   const [hoveredButton, setHoveredButton] = useState<"left" | "right" | null>(null);
+  const [isOverScrollable, setIsOverScrollable] = useState(false);
+  
+
 
   useEffect(() => {
     const newStartDate = getSundayOfWeek(weekOffset);
@@ -176,7 +179,7 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
           display: "block",
           position: "absolute",
           overflow: "clip",
-          width: "20vw",
+          width: "40vw",
           height: "20vh",
           pointerEvents: isShown ? "auto" : "none",
         }}
@@ -186,14 +189,18 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
             onClick={async () => {
               setIsShown(false);
               showPanel(true);
-            }}>
+            }}
+            className="menuButton"
+          >
             Edit
           </button>
           <button
             onClick={async () => {
               setIsShown(false);
               showDeletePanel(true);
-            }}>
+            }}
+            className="menuButton"
+          >
             Delete
           </button>
         </div>
@@ -280,6 +287,13 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                                 setIsShown(!isShown);
                                 setExerciseType(weekExcercises[i][j]);
                               }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "scale(1.2)";
+
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "scale(1.0)";
+                              }}                              
                             />
                           </div>
                         </div>
@@ -349,9 +363,14 @@ const month: CSSProperties = {
 };
 
 const dotsStyle: CSSProperties = {
-  height: "2vh",
-  padding: "4px",
+  height: "1.7vw",
+  minHeight: "12px",
+  maxHeight: "22px",
+  cursor: "pointer",
+  transition: "transform 0.2s ease, filter 0.2s ease",
+  zIndex: -1,
 };
+
 
 const inline: CSSProperties = {
   display: "block",

@@ -393,7 +393,7 @@ const profileImageStyle: React.CSSProperties = {
   position: 'absolute',
   borderRadius: '50%',
   objectFit: 'cover',
-  top: '-80px',
+  top: '-8%',
   margin: '0 auto',
   border: '6px solid black',
   left: '50%',

@@ -67,8 +67,9 @@ const NavigationBar: React.FC = () => {
 
   return (
     <header style={header}>
+      {/* Left Section */}
       <div
-        style={{...leftHeader, cursor: 'pointer'}}
+        style={{ ...leftHeader, cursor: 'pointer' }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.05)';
         }}
@@ -80,48 +81,76 @@ const NavigationBar: React.FC = () => {
         <div style={backArrowStyle}>&lt;</div>
         <div style={logoutText}>LOGOUT</div>
       </div>
+
+      {/* Center Section */}
       <div style={centerHeader}>
         DASHBOARD
       </div>
-      <div
-        style={{ ...clickableIconWrapper, left: '85%' }}
-        onClick={() => navigate('/leaderboard')}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-      >
-        <img src={logoImage} alt="logo" style={logoImageStyle} />
-      </div>
 
-      <div
-        style={{ ...clickableIconWrapper, left: '92%' }}
-        onClick={() => navigate('/profile')}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-      >
-        <img src={profilePictures[profilePicture]} alt="Profile" style={profileImageStyle} />
+      {/* Right Section */}
+      <div style={rightHeader}>
+        <div
+          style={clickableIconWrapper}
+          onClick={() => navigate('/leaderboard')}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          <img src={logoImage} alt="logo" style={logoImageStyle} />
+        </div>
+
+        <div
+          style={clickableIconWrapper}
+          onClick={() => navigate('/profile')}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          <img src={profilePictures[profilePicture]} alt="Profile" style={profileImageStyle} />
+        </div>
       </div>
     </header>
-  );
+  )
+};
+
+const rightHeader: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '1.5vw',
+  marginRight: '3vw',
 };
 
 const clickableIconWrapper: React.CSSProperties = {
-  position: 'absolute',
-  top: '20%',
-  left: '10%',
+  marginTop: '15%',
   cursor: 'pointer',
   transition: 'transform 0.2s ease-in-out',
 };
 
+const profileImageStyle: React.CSSProperties = {
+  width: '5vw',
+  height: '5vw',
+  borderRadius: '50%',
+  objectFit: 'cover',
+  border: '6px solid black',
+};
+
 const logoImageStyle: React.CSSProperties = {
-  width: '10vh',
+  width: '6vw',
+  transition: 'transform 0.2s ease-in-out',
+};
+
+const centerHeader: React.CSSProperties = {
+  position: 'absolute',
+  left: '50%',
+  top: '50%',
+  transform: 'translate(-50%, -50%)',
+  fontSize: '7vh',
+  letterSpacing: '5px',
+  whiteSpace: 'nowrap',
 };
 
 const header: React.CSSProperties = {
   userSelect: 'none',
   backgroundColor: '#BA0000',
   color: 'white',
-  justifyContent: 'space-between',
-  alignItems: 'center',
   fontFamily: 'microgramma-extended, sans-serif',
   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.5)',
   width: '100%',
@@ -131,55 +160,30 @@ const header: React.CSSProperties = {
   left: 0,
   zIndex: 2,
   borderBottom: '5px solid black',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '0 2vw',
+  fontSize: '10vh',
 };
 
 const leftHeader: React.CSSProperties = {
+  fontSize: '8vh',
+  color: 'white',
+  marginLeft: '7.5vw',
+  width: '2.5%',
   display: 'flex',
+  justifyContent: 'center',
   alignItems: 'center',
-  justifyContent: 'flex-start',
-  fontSize: '4vh',
-  gap: '1vh',
-  marginLeft: '5.4vh',
-  marginTop: '3.1vh',
-  width: '8%',
-  cursor: 'pointer',
-  transition: 'transform 0.2s ease-in-out',
 };
 
 const logoutText: React.CSSProperties = {
-  fontSize: '2vh',
-};
-
-
-const centerHeader: React.CSSProperties = {
-  position: 'absolute',
-  left: '50%',
-  top: '50%',
-  transform: 'translate(-50%, -50%)', 
-  width: 'auto',
-  padding: '8px',
-  fontSize: '7vh',
-  letterSpacing: '5px',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-};
-
-const profileImageStyle: React.CSSProperties = {
-  width: '10vh',
-  height: '10vh',
-  position: 'absolute',
-  borderRadius: '50%',
-  objectFit: 'cover',
-  top: '20%',
-  margin: '0 auto',
-  border: '6px solid black',
-  left: '95%',
+  fontSize: '2vw',
 };
 
 const backArrowStyle: React.CSSProperties = {
   color: 'white',
-  fontSize: '8vh',
+  fontSize: '60px',
   zIndex: 3,
 };
 
