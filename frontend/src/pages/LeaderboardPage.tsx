@@ -46,18 +46,25 @@ const LeaderboardPage: React.FC = () => {
 
   const [friendsLoaded, setFriendsLoaded] = useState(false);
 
+  const [fadeClass, setFadeClass] = useState('fade-in'); 
+
   useEffect(() => {
     const resetAndFetch = async () => {
-      setTopPowerLevels([]);
-      setFriends([]);
       setPage(1);
       setHasMore(true);
-  
+      if (isGlobal) {
+        setTopPowerLevels([]);
+      } else {
+        if (!friendsLoaded) {
+          setFriends([]);
+        }
+      }
+
       setTimeout(() => {
         fetchData(1);
       }, 0);
     };
-  
+
     resetAndFetch();
   }, [isGlobal]);
 
@@ -176,6 +183,16 @@ const LeaderboardPage: React.FC = () => {
   const handleMouseEnter = (index: number) => setHoveredRow(index);
   const handleMouseLeave = () => setHoveredRow(null);
 
+  const handleTabChange = (global: boolean) => {
+    setFadeClass('fade-out');
+  
+    setTimeout(() => {
+      setIsGlobal(global);
+      setFadeClass('fade-in');
+    }, 300);
+  };
+  
+
   // main return
   return (
     <div>
@@ -200,8 +217,8 @@ const LeaderboardPage: React.FC = () => {
 
       {/* Tabs to toggle between leaderboards */}
       <div style={tabWrapper}>
-        <button style={tabButton(isGlobal)} onClick={() => { console.log("Clicked Friends Tab"); setIsGlobal(true)}}>Global</button>
-        <button style={tabButton(!isGlobal)} onClick={() => setIsGlobal(false)}>Friends</button>
+        <button style={tabButton(isGlobal)} onClick={() => handleTabChange(true)}>Global</button>
+        <button style={tabButton(!isGlobal)} onClick={() => handleTabChange(false)}>Friends</button>
       </div>
 
       {/* Leaderboard */}
@@ -214,53 +231,52 @@ const LeaderboardPage: React.FC = () => {
           </div>
 
           {/* Global Leaderboard */}
-          {isGlobal ? (
-              TopPowerLevels.sort((a, b) => b.powerlevel - a.powerlevel).map((entry, index) => (
-                <Link to={`/profile/${entry.userId}`} key={index} style={{ textDecoration: 'none' }}>
-                  <div
-                    style={{
-                      ...getLeaderboardRowStyle(hoveredRow === index),
-                      backgroundColor: isUserRow(entry)
-                        ? 'rgb(205, 205, 205)'
-                        : (hoveredRow === index ? 'rgb(230, 230, 230)' : 'rgb(255, 255, 255)'),
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={() => handleMouseEnter(index)}
-                    onMouseLeave={handleMouseLeave}
-                  >
-                    <div style={columnStyle('transparent')}>{index + 1}</div>
-                    <div style={columnStyle('transparent', true)}>{entry.displayName}</div>
-                    <div style={columnStyle('transparent')}>{entry.powerlevel}</div>
-                  </div>
-                </Link>
+          <div className={`fade-row-container ${fadeClass}`} style={{ width: '100%' }}>
+            {isGlobal ? (
+                TopPowerLevels.sort((a, b) => b.powerlevel - a.powerlevel).map((entry, index) => (
+                  <Link to={`/profile/${entry.userId}`} key={index} style={{ textDecoration: 'none' }}>
+                    <div
+                      style={{
+                        ...getLeaderboardRowStyle(hoveredRow === index),
+                        backgroundColor: isUserRow(entry)
+                          ? 'rgb(205, 205, 205)'
+                          : (hoveredRow === index ? 'rgb(230, 230, 230)' : 'rgb(255, 255, 255)'),
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={() => handleMouseEnter(index)}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <div style={columnStyle('transparent')}>{index + 1}</div>
+                      <div style={columnStyle('transparent', true)}>{entry.displayName}</div>
+                      <div style={columnStyle('transparent')}>{entry.powerlevel}</div>
+                    </div>
+                  </Link>
+                )
               )
-            )
-          ) : (
-            // Friends Leaderboard
-            !friendsLoaded ? (
-              <div style={loadingStyle}>Loading Friends Leaderboard...</div>
             ) : (
-              friends.sort((a, b) => b.powerlevel - a.powerlevel).map((entry, index) => (
-                <Link to={`/profile/${entry.userId}`} key={index} style={{ textDecoration: 'none' }}>
-                  <div
-                    key={index}
-                    style={{
-                      ...getLeaderboardRowStyle(hoveredRow === index),
-                      backgroundColor: isUserRow(entry)
-                      ? 'rgb(205, 205, 205)' 
-                      : (hoveredRow === index ? 'rgb(230, 230, 230)' : 'rgb(255, 255, 255)'),
-                    }}
-                    onMouseEnter={() => handleMouseEnter(index)}
-                    onMouseLeave={handleMouseLeave}
-                  >
-                    <div style={columnStyle('transparent')}>{index + 1}</div>
-                    <div style={columnStyle('transparent', true)}>{entry.displayName}</div>
-                    <div style={columnStyle('transparent')}>{entry.powerlevel}</div>
-                  </div>
-                </Link>
-              ))
-            )
-          )}
+              // Friends Leaderboard
+                friends.sort((a, b) => b.powerlevel - a.powerlevel).map((entry, index) => (
+                  <Link to={`/profile/${entry.userId}`} key={index} style={{ textDecoration: 'none' }}>
+                    <div
+                      key={index}
+                      style={{
+                        ...getLeaderboardRowStyle(hoveredRow === index),
+                        backgroundColor: isUserRow(entry)
+                        ? 'rgb(205, 205, 205)' 
+                        : (hoveredRow === index ? 'rgb(230, 230, 230)' : 'rgb(255, 255, 255)'),
+                      }}
+                      onMouseEnter={() => handleMouseEnter(index)}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <div style={columnStyle('transparent')}>{index + 1}</div>
+                      <div style={columnStyle('transparent', true)}>{entry.displayName}</div>
+                      <div style={columnStyle('transparent')}>{entry.powerlevel}</div>
+                    </div>
+                  </Link>
+                ))
+              )
+            }
+          </div>
         </div>
       </div>
 
@@ -274,15 +290,6 @@ const LeaderboardPage: React.FC = () => {
     </div>
   );
 };
-
-const loadingStyle: React.CSSProperties = {
-  color: 'white',
-  fontSize: '24px',
-  padding: '40px',
-  textAlign: 'center',
-  fontFamily: 'microgramma-extended, sans-serif',
-};
-
 
 // header
 const header: React.CSSProperties = {

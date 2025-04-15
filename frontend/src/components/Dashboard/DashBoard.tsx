@@ -30,9 +30,6 @@ function LoggedInName()
 
     return(
         <div>
-            <div id="loggedInDiv">
-            <span id="userName">Logged In As {displayName}</span><br />
-            </div>
             <ConfirmDelete date = {date} index = {index} panelVisible = {showDeleteConfirm} showPanel = {setShowDeleteConfirm}></ConfirmDelete>
             <EditWorkoutPanel date = {date} index = {index} panelVisible = {panelVisible} 
                 showPanel = {showPanel} exerciseType = {exerciseType} setExerciseType = {setExerciseType}/>

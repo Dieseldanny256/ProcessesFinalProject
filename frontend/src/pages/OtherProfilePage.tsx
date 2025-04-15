@@ -12,6 +12,20 @@ import profile5 from '../assets/profile5.png';
 import profile6 from '../assets/profile6.png';
 import profile7 from '../assets/TheHolyOne.png';
 
+const app_name = 'powerleveling.xyz';
+
+function buildPath(route:string) : string
+{
+  if (process.env.NODE_ENV != 'development')
+  {
+  return 'http://' + app_name + ':5000/' + route;
+  }
+  else
+  {
+  return 'http://localhost:5000/' + route;
+  }
+}
+
 // make the chart work
 import {
   Chart as ChartJS,
@@ -57,7 +71,7 @@ const OtherProfilePage: React.FC = () => {
       let obj = { userId: Number(userId) };
       let js = JSON.stringify(obj);
 
-      const response = await fetch('http://localhost:5000/api/getProfile', {
+      const response = await fetch(buildPath('api/getProfile'), {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' },
@@ -80,7 +94,7 @@ const OtherProfilePage: React.FC = () => {
       let obj = { userId: Number(userId) };
       let js = JSON.stringify(obj);
 
-      const response = await fetch('http://localhost:5000/api/searchFriends', {
+      const response = await fetch(buildPath('api/searchFriends'), {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' },

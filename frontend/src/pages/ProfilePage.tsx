@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Radar } from 'react-chartjs-2';
 import { Link, useNavigate } from 'react-router-dom';
-import GreyBackground from '../components/Images/GreyBackground.tsx'; 
+import GreyBackground from '../components/Images/GreyBackground'; 
 import logoImage from '../assets/logo.png';
 
 import profile1 from '../assets/profile1.png';
@@ -41,6 +41,7 @@ ChartJS.register(
 );
 
 const app_name = 'powerleveling.xyz';
+
 function buildPath(route:string) : string
 {
   if (process.env.NODE_ENV != 'development')
@@ -118,10 +119,10 @@ const ProfilePage: React.FC = () => {
     setPowerLevel(res.profile.powerlevel);
   }
 
-  async function updateProfilePicture(pictureIndex: number): Promise<void> {
+  async function updateProfilePicture(profilePicture: number): Promise<void> {
     const obj = {
       userId: userId,
-      profilePicture: pictureIndex,
+      profilePicture: profilePicture,
     };
   
     const js = JSON.stringify(obj);
@@ -135,7 +136,7 @@ const ProfilePage: React.FC = () => {
   
       if (!response.ok) throw new Error('Failed to update profile picture');
   
-      setProfilePicture(pictureIndex);
+      setProfilePicture(profilePicture);
     } catch (error) {
       console.error('Error updating profile picture:', error);
     }
@@ -549,12 +550,15 @@ const ProfilePage: React.FC = () => {
                           }}
                           onClick={() => {
                             if (isAlreadyFriend) {
-                              console.log('deleted friend');
-                              deleteFriend(result.userId);
-                            } else if (!isRequestSent) {
-                              console.log('sent friend request');
-                              sendFriendRequest(result.userId);
-                            }
+                              const confirmDelete = window.confirm(`Are you sure you want to remove ${result.displayName} as a friend?`);
+                              if (confirmDelete) {
+                                console.log('deleted friend');
+                                deleteFriend(result.userId);
+                              }
+                              } else if (!isRequestSent) {
+                                console.log('sent friend request');
+                                sendFriendRequest(result.userId);
+                              }
                           }}
                         >
                           {isAlreadyFriend ? 'Remove' : isRequestSent ? 'Sent' : 'Send'}
@@ -1067,7 +1071,7 @@ const editButtonStyle: React.CSSProperties = {
   color: 'rgb(0, 0, 0)',
   letterSpacing: '1px',
   position: 'relative',
-  top: '24%',
+  top: '23%',
   fontSize: '2.2vh',
   paddingLeft: '1vh',
   paddingRight: '1vh',
@@ -1127,7 +1131,7 @@ const profileImageStyle: React.CSSProperties = {
   position: 'absolute',
   borderRadius: '50%',
   objectFit: 'cover',
-  top: '-80px',
+  top: '-8%',
   margin: '0 auto',
   border: '6px solid black',
   left: '50%',
@@ -1214,7 +1218,7 @@ const leftHeader: React.CSSProperties = {
   fontSize: '8vh',
   color: 'white',
   marginLeft: '5vh',
-  marginTop: '2%',
+  marginTop: '1.5%',
   width: '2.5%',
   display: 'flex',
   justifyContent: 'center',
