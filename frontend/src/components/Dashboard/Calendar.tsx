@@ -1,4 +1,5 @@
 import React, { CSSProperties, useEffect, useState } from "react";
+import dots from "../../assets/dots.png";
 //import { useNavigate } from "react-router-dom";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -45,50 +46,61 @@ interface CalendarProps
     index : number,
     updateIndex: (index: number) => void,
     panelVisible: boolean,
-    showPanel: (visibility: boolean) => void
+    showPanel: (visibility: boolean) => void,
+    deletePanelVisible: boolean,
+    showDeletePanel: (visibility: boolean) => void
 }
 
-const Calendar: React.FC<CalendarProps> = ({date, updateDate, index, updateIndex, panelVisible, showPanel}) => {
+const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisible, showPanel, deletePanelVisible, showDeletePanel}) => {
   // Hi - Jacob
   // Salutations - Daniel
-  // Greetings - Stephen
+
   const[weekOffset, setWeekOffset] = useState(0);
   const[weekExcercises, setWeekExercises] = useState<any[][]>([[], [], [], [], [], [], []]);
   const[startDate, setStartDate] = useState<Date>(getSundayOfWeek(0));
+  const[tempStartDate, setTempStartDate] = useState<Date>(getSundayOfWeek(0));
   //const[loading, setLoading] = useState(false);
 
+  const [isShown, setIsShown] = useState(false);
+  const [slidePanelPosition, setSlidePanelPosition] = useState({left: 0, top: 0});
+
   useEffect(() => {
-    setStartDate(getSundayOfWeek(weekOffset));
+    const newStartDate = getSundayOfWeek(weekOffset);
+    setTempStartDate(newStartDate);
   }, [weekOffset]);
 
   useEffect(() => {
-    const fetchExercises = async () => {
-      //setLoading(true);
-      const _userData = localStorage.getItem("user_data");
-      if (!_userData) {
-        alert("User not logged in.");
-        //setLoading(false);
-        return;
-      }
-      const userData = JSON.parse( _userData );
-      const userId = userData.userId;
+    setStartDate(tempStartDate); // update state for rendering
+  }, [weekExcercises]);
 
-      const dateString = getDateString(startDate);
-
-      try {
-        const response = await fetch(buildPath(`api/workouts/${userId}/${dateString}/weekExercises`));
-        const data = await response.json();
-        setWeekExercises(data.exercises || [[], [], [], [], [], [], []]);
-      } catch (err) {
-        console.error(err);
-        alert("Failed to fetch exercises.");
-      }
-
-      //setLoading(false);
-    };
-
+  useEffect(() => {
     fetchExercises();
-  }, [startDate, panelVisible]);
+  }, [tempStartDate, panelVisible, deletePanelVisible]);
+
+  const fetchExercises = async () => {
+    //setLoading(true);
+    const _userData = localStorage.getItem("user_data");
+    if (!_userData) {
+      alert("User not logged in.");
+      //setLoading(false);
+      return;
+    }
+    const userData = JSON.parse( _userData );
+    const userId = userData.userId;
+
+    const dateString = getDateString(tempStartDate);
+
+    try {
+      const response = await fetch(buildPath(`api/workouts/${userId}/${dateString}/weekExercises`));
+      const data = await response.json();
+      setWeekExercises(data.exercises || [[], [], [], [], [], [], []]);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to fetch exercises.");
+    }
+
+    //setLoading(false);
+  };
 
   const handleAddClick = (date: Date) => {
     updateDate(getDateString(date));
@@ -131,6 +143,22 @@ const Calendar: React.FC<CalendarProps> = ({date, updateDate, index, updateIndex
 
   return (
     <div style = {outerContainer}>
+      <div style = {{
+        left: `${slidePanelPosition.left}px`, 
+        top: `${slidePanelPosition.top}px`, 
+        display : "block", 
+        position: "absolute", 
+        overflow : "clip", 
+        width : "20vw", 
+        height : "20vh",
+        pointerEvents : isShown ? "auto" : "none"
+        }}>
+        <div className = {`slidingMenu ${isShown ? 'show' : ''}`}>
+          <button>Edit</button>
+          <button onClick={async () => {setIsShown(false); showDeletePanel(true);}}>Delete</button>
+        </div>
+      </div>
+
       <h1 style = {month}>{monthNames[startDate.getMonth()]} {startDate.getFullYear()}</h1>
       <div style = {container}>
         <button className="button" style={button} onClick={() => setWeekOffset(prev => prev - 1)}>&lt;</button>
@@ -158,15 +186,28 @@ const Calendar: React.FC<CalendarProps> = ({date, updateDate, index, updateIndex
                       <strong>{dayNames[i]}</strong><br />
                       <span>{monthAbbreviations[cellDate.getMonth()]} {cellDate.getDate()}</span>
                     </div>
-
-                    <button onClick={() => handleAddClick(cellDate)}>+</button>
-
-                    {dayExercises.slice(0, 3).map((exercise: any, j: number) => (
+                    
+                    <div style={inline}>
+                    {dayExercises.map((exercise: any, j: number) => (
                       <div key={j} className="calendarItem">
-                        <span>{exercise.exerciseId.name}</span><br />
-                        <span>{exercise.reps} {exercise.sets}</span>
+                        <div><span>{exercise.exerciseId.name}</span><br />
+                        <span>Reps {exercise.reps} Sets {exercise.sets}</span></div>
+                        <div><img src={dots} style={dotsStyle} 
+                        onClick={(event) => {
+                          if (event.currentTarget.parentElement?.parentElement == null)
+                          {
+                            return;
+                          }
+                          const rect = event.currentTarget.parentElement?.parentElement.getBoundingClientRect();
+                          setSlidePanelPosition({ left: rect.right, top: rect.top });
+                          updateIndex(j);
+                          updateDate(getDateString(cellDate));
+                          setIsShown(!isShown);}}></img></div>
                       </div>
                     ))}
+                    </div>
+
+                    <button onClick={() => handleAddClick(cellDate)}>+</button>
                   </td>
                 );
               })}
@@ -215,6 +256,18 @@ const month: CSSProperties = {
   fontWeight: "700",
   fontStyle: "normal",
   fontSize: "3vw"
+}
+
+const dotsStyle: CSSProperties = {
+  height: "2vh",
+  padding: "4px"
+}
+
+const inline: CSSProperties = {
+  display: "block",
+  height: "25vh",
+  overflowY: "auto",
+  scrollbarWidth: "thin"
 }
 
 export default Calendar;

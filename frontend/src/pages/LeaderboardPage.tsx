@@ -3,6 +3,19 @@ import GreyBackground from '../components/Images/GreyBackground';
 import logoImage from '../assets/logo.png';
 import { Link } from 'react-router-dom';
 
+const app_name = 'powerleveling.xyz';
+function buildPath(route:string) : string
+{
+  if (process.env.NODE_ENV != 'development')
+  {
+  return 'http://' + app_name + ':5000/' + route;
+  }
+  else
+  {
+  return 'http://localhost:5000/' + route;
+  }
+}
+
 const LeaderboardPage: React.FC = () => {
   const [isGlobal, setIsGlobal] = useState(true);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -51,7 +64,7 @@ const LeaderboardPage: React.FC = () => {
   // getProfile API
   useEffect(() => {
     async function getProfile(): Promise<void> {
-      const response = await fetch('http://localhost:5000/api/getProfile', { // change URL for actual website
+      const response = await fetch(buildPath('api/getProfile'), { // change URL for actual website
         method: 'POST', 
         body: JSON.stringify({ userId: userId }),
         headers: { 'Content-Type': 'application/json' },
@@ -69,7 +82,7 @@ const LeaderboardPage: React.FC = () => {
   useEffect(() => {
     if (!isGlobal && !friendsLoaded) {
       async function searchFriends(): Promise<void> {
-        const response = await fetch('http://localhost:5000/api/searchFriends', {
+        const response = await fetch(buildPath('api/searchFriends'), {
           method: 'POST',
           body: JSON.stringify({ userId }),
           headers: { 'Content-Type': 'application/json' },
@@ -96,10 +109,10 @@ const LeaderboardPage: React.FC = () => {
     if (loading || !hasMore) return;
     setLoading(true);
   
-    const endpoint = isGlobal ? '/api/getTopPowerlevels' : '/api/getTopFriendPowerLevels';
+    const endpoint = isGlobal ? 'api/getTopPowerlevels' : 'api/getTopFriendPowerLevels';
   
     try {
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const response = await fetch(buildPath(`${endpoint}`), {
         method: 'POST',
         body: JSON.stringify({ userId, page: fetchPage }),
         headers: { 'Content-Type': 'application/json' },
@@ -125,7 +138,7 @@ const LeaderboardPage: React.FC = () => {
       }
   
       setHasMore(newProfiles.length === 10);
-      setPage(prev => fetchPage + 1);
+      setPage(fetchPage + 1);
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {

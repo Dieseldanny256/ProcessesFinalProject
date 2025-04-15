@@ -103,29 +103,27 @@ router.put('/:userId/:date', async (req, res) => {
 });
 
 // This step is for deleting a specific exercise from a workout
-router.delete('/:userId/:date/:exerciseId', async (req, res) => {
+router.delete('/:userId/:date/:index', async (req, res) => {
     try {
-        const { userId, date, exerciseId } = req.params;
+        const { userId, date, index } = req.params;
 
         const numericUserId = Number(userId);
         if (!Number.isFinite(numericUserId)) {
             return res.status(400).json({ error: 'Invalid userId format' });
         }
 
-        const workout = await Workout.findOneAndUpdate(
-            { userId: numericUserId, date },
-            { $pull: { exercises: { exerciseId } } },
-            { new: true }
-        );
+        // This step is for finding the workout of the user on the specific date
+        const workout = await Workout.findOne({ userId: numericUserId, date }).populate('exercises.exerciseId');
+        console.log(workout);
 
         if (!workout) {
-            return res.status(404).json({ error: 'Workout not found or exercise not found' });
+            return res.status(200).json({ error: 'Workout not found for the specified date' });
         }
 
-        const updatedStats = await updateStats(numericUserId);
-        const powerlevel = Object.values(updatedStats).reduce((a, b) => a + b, 0);
+        workout.exercises.splice(index, 1);
+        await workout.save();
 
-        res.status(200).json({ message: 'Exercise deleted successfully!', updatedStats, powerlevel });
+        res.status(200).json({ message: 'Exercise deleted successfully!' });
     } catch (error) {
         console.error("Error deleting exercise:", error.message);
         res.status(500).json({ error: 'Failed to delete exercise' });
@@ -227,7 +225,6 @@ router.get('/:userId/:date/exercises', async (req, res) => {
 
         // This step is for finding the workout of the user on the specific date
         const workout = await Workout.findOne({ userId: numericUserId, date }).populate('exercises.exerciseId');
-        console.log(workout);
 
         if (!workout) {
             return res.status(200).json({ error: 'Workout not found for the specified date' });
@@ -316,9 +313,7 @@ router.get('/:userId/:date/weekExercises', async (req, res) => {
         for (let i = 0; i < 7; i++)
         {
             let dateString = getDateString(dateObj);
-            console.log(dateString);
             const workout = await Workout.findOne({ userId: numericUserId, date: dateString }).populate('exercises.exerciseId');
-            console.log(workout);
             
             if (!workout) {
                 exercises.push([]);
@@ -326,7 +321,6 @@ router.get('/:userId/:date/weekExercises', async (req, res) => {
                 continue;
             }
 
-            console.log("Found workout!");
             exercises.push(workout.exercises);
             dateObj.setDate(dateObj.getDate() + 1);
         }

@@ -40,6 +40,19 @@ ChartJS.register(
   Filler
 );
 
+const app_name = 'powerleveling.xyz';
+function buildPath(route:string) : string
+{
+  if (process.env.NODE_ENV != 'development')
+  {
+  return 'http://' + app_name + ':5000/' + route;
+  }
+  else
+  {
+  return 'http://localhost:5000/' + route;
+  }
+}
+
 const ProfilePage: React.FC = () => {
   const profilePictures = [profile1, profile2, profile3, profile4, profile5, profile6, profile7];
 
@@ -90,7 +103,7 @@ const ProfilePage: React.FC = () => {
     let obj = { userId: userId };
     let js = JSON.stringify(obj);
 
-    const response = await fetch('http://localhost:5000/api/getProfile', { // change URL for actual website
+    const response = await fetch(buildPath('api/getProfile'), { // change URL for actual website
       method: 'POST',
       body: js,
       headers: { 'Content-Type': 'application/json' },
@@ -114,7 +127,7 @@ const ProfilePage: React.FC = () => {
     const js = JSON.stringify(obj);
   
     try {
-      const response = await fetch('http://localhost:5000/api/updateProfilePicture', {
+      const response = await fetch(buildPath('api/updateProfilePicture'), {
         method: 'POST',
         body: js,
         headers: { 'Content-Type': 'application/json' },
@@ -133,7 +146,7 @@ const ProfilePage: React.FC = () => {
     let obj = { userId: userId };
     let js = JSON.stringify(obj);
 
-    const response = await fetch('http://localhost:5000/api/searchFriends', { // change URL for actual website
+    const response = await fetch(buildPath('api/searchFriends'), { // change URL for actual website
       method: 'POST',
       body: js,
       headers: { 'Content-Type': 'application/json' },
@@ -151,7 +164,7 @@ const ProfilePage: React.FC = () => {
     let obj = { userId: userId };
     let js = JSON.stringify(obj);
 
-    const response = await fetch('http://localhost:5000/api/searchRequests', { // change URL for actual website
+    const response = await fetch(buildPath('api/searchRequests'), { // change URL for actual website
       method: 'POST',
       body: js,
       headers: { 'Content-Type': 'application/json' },
@@ -309,7 +322,7 @@ const ProfilePage: React.FC = () => {
   };
 
   const searchProfiles = async () => {
-    const response = await fetch('http://localhost:5000/api/searchProfiles', {
+    const response = await fetch(buildPath('api/searchProfiles'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({searchText}),
@@ -323,7 +336,7 @@ const ProfilePage: React.FC = () => {
 
   // delete friend
   const deleteFriend = async (friendUserId: string) => {
-    await fetch('http://localhost:5000/api/deleteFriend', {
+    await fetch(buildPath('api/deleteFriend'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, friendUserId }),
@@ -335,7 +348,7 @@ const ProfilePage: React.FC = () => {
   };
 
   const sendFriendRequest = async (friendUserId: string) => {
-    await fetch('http://localhost:5000/api/sendFriendRequest', {
+    await fetch(buildPath('api/sendFriendRequest'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, friendUserId }),
@@ -347,7 +360,7 @@ const ProfilePage: React.FC = () => {
   };
 
   const denyFriendRequest = async (friendUserId: Number) => {
-    await fetch('http://localhost:5000/api/denyFriendRequest', {
+    await fetch(buildPath('api/denyFriendRequest'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -360,7 +373,7 @@ const ProfilePage: React.FC = () => {
   };
   
   const acceptFriendRequest = async(friendUserId: Number) => {
-    await fetch('http://localhost:5000/api/addFriend', {
+    await fetch(buildPath('api/addFriend'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({userId: userId, friendUserId: friendUserId}),

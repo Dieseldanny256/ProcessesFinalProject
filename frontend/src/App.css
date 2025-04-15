@@ -115,7 +115,7 @@
   font-style: normal;
   font-size: 1.5vw;
   letter-spacing: 5px;
-  height: 25vh;
+  height: 35vh;
   margin-top: 0.1vh;
   vertical-align: text-top;
 }
@@ -131,9 +131,12 @@
   font-weight: 700;
   font-style: normal;
   font-size: 1vw;
-  letter-spacing: 5px;
+  letter-spacing: 2px;
   padding: 2px;
+  margin: 0;
   margin-top: 0.1vh;
+  display: flex;
+  flex-direction: row;
 }
 
 .dropdownContent {
@@ -151,4 +154,19 @@
 .dropdownContent:focus {
   background-color: #FFB202;
   color: black;
+}
+
+.slidingMenu {
+  position: absolute;
+  transform: translateX(-100%);
+  background: #fff0f0;
+  transition: transform 0.5s;
+  width: 90%;
+  height: 8vh;
+  border: #000000 3px solid;
+  padding: 1vh;
+
+  &.show {
+    transform: translateX(0);
+  }
 }

@@ -19,7 +19,7 @@ const BackGround : React.FC<BackgroundProps> = ({ children }) => {
         top: 0,
         left: 0,
         minHeight: "100%",
-        minWidth: "100%",
+        minWidth: "100%"
       }}>
         {children}
     </div>
