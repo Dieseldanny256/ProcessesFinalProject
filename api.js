@@ -546,4 +546,119 @@ exports.setApp = function (app, client) {
         var ret = { error: error };
         res.status(200).json(ret);
     });    
+
+    app.post('/api/checkOffWorkout', async (req, res, next) => {
+        // incoming: userId, date
+        // outgoing: error
+
+        const { userId, date } = req.body;
+
+        var error = '';
+
+        try {
+            const db = client.db();
+            const workoutsCollection = db.collection('workouts');
+            const exercisesCollection = db.collection('exercises');
+
+            // Find the workout by userId and date
+            const workout = await workoutsCollection.findOne({ userId: userId, date: date });
+
+            if (!workout) {
+                error = 'Workout not found';
+                return res.status(400).json({ error: error });
+            }
+
+            if (workout.checkedOff) {
+                error = 'Workout already checked off';
+                return res.status(400).json({ error: error });
+            }
+
+            // Mark the workout as checked off
+            await workoutsCollection.updateOne(
+                { userId: userId, date: date },
+                { $set: { checkedOff: true } }
+            );
+
+            // Calculate stats and powerlevel updates
+            const stats = [0, 0, 0, 0, 0, 0]; // chest, back, leg, stamina, core, arm
+            let totalReps = 0;
+
+            for (const exercise of workout.exercises) {
+                const { sets, reps, exerciseId } = exercise;
+                const total = sets * reps;
+                totalReps += total;
+
+                // Fetch the exercise category
+                const exerciseData = await exercisesCollection.findOne({ _id: exerciseId });
+                if (exerciseData) {
+                    const category = exerciseData.category.toLowerCase();
+                    switch (category) {
+                        case 'chest':
+                            stats[0] += total;
+                            break;
+                        case 'back':
+                            stats[1] += total;
+                            break;
+                        case 'leg':
+                            stats[2] += total;
+                            break;
+                        case 'stamina':
+                            stats[3] += total;
+                            break;
+                        case 'core':
+                            stats[4] += total;
+                            break;
+                        case 'arm':
+                            stats[5] += total;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // Update the user's profile
+            const result = await updateProfileStats(client, userId, workout.checkedOff ? 0 : 1, totalReps, stats);
+
+            if (!result.success) {
+                error = result.message;
+                return res.status(400).json({ error: error });
+            }
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { error: error };
+        res.status(200).json(ret);
+    });
+
+    app.post('/api/findCheck', async (req, res, next) => {
+        // incoming: userId, date
+        // outgoing: isCheckedOff (boolean), error
+
+        const { userId, date } = req.body;
+
+        var error = '';
+        var isCheckedOff = false;
+
+        try {
+            const db = client.db();
+            const workoutsCollection = db.collection('workouts');
+
+            // Find the workout by userId and date
+            const workout = await workoutsCollection.findOne({ userId: userId, date: date });
+
+            if (!workout) {
+                error = 'Workout not found';
+            } else {
+                isCheckedOff = workout.checkedOff || false;
+            }
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { isCheckedOff: isCheckedOff, error: error };
+        res.status(200).json(ret);
+    });
+
 }
