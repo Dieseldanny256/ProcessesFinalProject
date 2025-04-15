@@ -314,7 +314,7 @@ const leftHeader: React.CSSProperties = {
   fontSize: '8vh',
   color: 'white',
   marginLeft: '5vh',
-  marginTop: '2%',
+  marginTop: '1.5%',
   width: '2.5%',
   display: 'flex',
   justifyContent: 'center',

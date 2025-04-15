@@ -57,6 +57,8 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
   const [slidePanelPosition, setSlidePanelPosition] = useState({ left: 0, top: 0 });
 
   const [hoveredButton, setHoveredButton] = useState<"left" | "right" | null>(null);
+  const [isOverScrollable, setIsOverScrollable] = useState(false);
+
 
   useEffect(() => {
     const newStartDate = getSundayOfWeek(weekOffset);
@@ -120,12 +122,15 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
   };
 
   const handleWheel = (event: React.WheelEvent) => {
-    if (event.deltaY > 0) {
-      setWeekOffset((prev) => prev + 1);
-    } else {
-      setWeekOffset((prev) => prev - 1);
+    if (!isOverScrollable) {
+      if (event.deltaY > 0) {
+        setWeekOffset((prev) => prev + 1);
+      } else {
+        setWeekOffset((prev) => prev - 1);
+      }
     }
   };
+  
 
   const getButtonStyle = (side: "left" | "right"): CSSProperties => ({
     transformOrigin: "center",
@@ -227,7 +232,11 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                       <strong>{monthAbbreviations[cellDate.getMonth()]} {cellDate.getDate()}</strong>
                     </div>
 
-                    <div style={inline}>
+                    <div
+                    style={inline}
+                      onMouseEnter={() => setIsOverScrollable(true)}
+                      onMouseLeave={() => setIsOverScrollable(false)}
+                    >
                       {dayExercises.map((exercise: any, j: number) => (
                         <div key={j} className="calendarItem">
                           <div>
