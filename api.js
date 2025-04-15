@@ -517,4 +517,33 @@ exports.setApp = function (app, client) {
         var ret = { matchingProfiles: matchingProfiles, error: error };
         res.status(200).json(ret);
     });
+    
+    app.post('/api/updateProfilePicture', async (req, res, next) => {
+        // incoming: userId, profilePicture
+        // outgoing: error
+
+        const { userId, profilePicture } = req.body;
+
+        var error = '';
+
+        try {
+            const db = client.db();
+            const profilesCollection = db.collection('Profiles');
+
+            // Update the profilePicture value for the given userId
+            const result = await profilesCollection.updateOne(
+                { userId: userId },
+                { $set: { profilePicture: profilePicture } }
+            );
+
+            if (result.matchedCount === 0) {
+                error = 'Profile not found';
+            }
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { error: error };
+        res.status(200).json(ret);
+    });    
 }
