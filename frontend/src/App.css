@@ -152,7 +152,7 @@
   font-size: 1vw;
   letter-spacing: 1px;
 
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0px 6px rgba(0, 0, 0, 0.50);
 }
 
 .dropdownContent {
@@ -173,12 +173,77 @@
 }
 
 .slidingMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background-color: #333;
+  border-radius: 8px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.slidingMenu {
+  display: flex;
+  flex-direction: row; /* Buttons in a row */
+  justify-content: space-between;
+  gap: 5%; /* Add some space between the buttons */
+  padding: 5%;
+  background-color: #333;
+  border-radius: 8px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.slidingMenu {
+  display: flex;
+  justify-content: space-evenly;
+  padding: 0.5vw; /* Reduced padding around the container */
+  background-color: #333;
+  border-radius: 8px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.3);
+  width: 100%; /* Full width of the container */
+  align-items: center; /* Center buttons vertically */
+}
+
+.menuButton {
+  font-family: 'Arial', sans-serif;
+  font-size: 0.8vw;
+  padding: 1vh 1vw;
+  color: white;
+  background-color: #000;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-grow: 1;
+  max-width: 20vw;
+}
+
+.menuButton:hover {
+  background-color: #444;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.menuButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+.menuButton:active {
+  background-color: #333;
+}
+
+.slidingMenu {
   position: absolute;
   transform: translateX(-100%);
   background: #fff0f0;
   transition: transform 0.5s;
-  width: 90%;
-  height: 8vh;
+  width: 8vw;
+  height: 2vw;
   border: #000000 3px solid;
   padding: 1vh;
 

@@ -480,7 +480,7 @@ const leftHeader: React.CSSProperties = {
   fontSize: '8vh',
   color: 'white',
   marginLeft: '5vh',
-  marginTop: '1.5%',
+  marginTop: '2%',
   width: '2.5%',
   display: 'flex',
   justifyContent: 'center',
