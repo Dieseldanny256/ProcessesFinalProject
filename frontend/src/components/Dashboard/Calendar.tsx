@@ -49,9 +49,10 @@ interface CalendarProps
     showPanel: (visibility: boolean) => void,
     deletePanelVisible: boolean,
     showDeletePanel: (visibility: boolean) => void
+    setExerciseType: (exercise: {exerciseId : {_id:number, name:string, category:string, __v:number}, sets:number, reps:number, _id:number }) => void
 }
 
-const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisible, showPanel, deletePanelVisible, showDeletePanel}) => {
+const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisible, showPanel, deletePanelVisible, showDeletePanel, setExerciseType}) => {
   // Hi - Jacob
   // Salutations - Daniel
 
@@ -106,6 +107,8 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
     updateDate(getDateString(date));
     updateIndex(-1);
     showPanel(true);
+    setIsShown(false);
+    setExerciseType({exerciseId: {_id:-1, name: "Select Workout", category: "", __v: -1}, sets: 0, reps: 0, _id: -1 });
   };
 
   const compareDates = (date1 : Date, date2 : Date) =>
@@ -154,8 +157,8 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
         pointerEvents : isShown ? "auto" : "none"
         }}>
         <div className = {`slidingMenu ${isShown ? 'show' : ''}`}>
-          <button>Edit</button>
-          <button onClick={async () => {setIsShown(false); showDeletePanel(true);}}>Delete</button>
+          <button onClick={() => {setIsShown(false); showPanel(true);}}>Edit</button>
+          <button onClick={() => {setIsShown(false); showDeletePanel(true);}}>Delete</button>
         </div>
       </div>
 
@@ -194,6 +197,7 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                         <span>Reps {exercise.reps} Sets {exercise.sets}</span></div>
                         <div><img src={dots} style={dotsStyle} 
                         onClick={(event) => {
+                          setExerciseType(weekExcercises[i][j]);
                           if (event.currentTarget.parentElement?.parentElement == null)
                           {
                             return;

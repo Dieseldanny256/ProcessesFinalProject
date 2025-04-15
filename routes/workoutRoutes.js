@@ -72,30 +72,28 @@ router.post('/log', async (req, res) => {
 });
 
 // This step is for editing workout for a specific day
-router.put('/:userId/:date', async (req, res) => {
+router.put('/update/:userId/:date/:index', async (req, res) => {
     try {
-        const { userId, date } = req.params;
-        const { exercises } = req.body;
+        const { userId, date, index } = req.params;
+        const { exercise } = req.body;
 
         const numericUserId = Number(userId);
         if (!Number.isFinite(numericUserId)) {
             return res.status(400).json({ error: 'Invalid userId format' });
         }
 
-        const workout = await Workout.findOneAndUpdate(
-            { userId: numericUserId, date },
-            { exercises },
-            { new: true }
-        );
+        // This step is for finding the workout of the user on the specific date
+        const workout = await Workout.findOne({ userId: numericUserId, date }).populate('exercises.exerciseId');
+        console.log(workout);
 
         if (!workout) {
-            return res.status(404).json({ error: 'Workout not found for the specified date' });
+            return res.status(200).json({ error: 'Workout not found for the specified date' });
         }
 
-        const updatedStats = await updateStats(numericUserId);
-        const powerlevel = Object.values(updatedStats).reduce((a, b) => a + b, 0);
+        workout.exercises[index] = exercise;
+        await workout.save();
 
-        res.status(200).json({ message: 'Workout updated successfully!', updatedStats, powerlevel });
+        res.status(200).json({ message: 'Workout updated successfully!' });
     } catch (error) {
         console.error("Error updating workout:", error.message);
         res.status(500).json({ error: 'Failed to update workout' });
@@ -242,7 +240,7 @@ router.get('/:userId/:date/exercises', async (req, res) => {
 });
 
 // This step is for adding a new exercise, creating a new workout if that 
-router.put('/:userId/:date/add', async (req, res) => {
+router.put('/add/:userId/:date', async (req, res) => {
     try {
         const { userId, date } = req.params;
         const { exercises } = req.body;

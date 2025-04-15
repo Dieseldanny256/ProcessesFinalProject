@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect } from "react";
+import React, { CSSProperties } from "react";
 
 const app_name = 'powerleveling.xyz';
 function buildPath(route:string) : string

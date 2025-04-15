@@ -20,17 +20,19 @@ interface EditWorkoutPanel
     date : string,
     index : number,
     showPanel : (visible : boolean) => void,
-    panelVisible : boolean
+    panelVisible : boolean,
+    exerciseType: {exerciseId : {_id:number, name:string, category:string, __v:number}, sets:number, reps:number, _id:number },
+    setExerciseType: React.Dispatch<React.SetStateAction<{
+      exerciseId: {_id: number, name: string, category: string, __v: number},
+      sets: number,
+      reps: number,
+      _id: number
+    }>>
 }
 
-const EditWorkoutPanel: React.FC<EditWorkoutPanel> = ({ date, index, showPanel, panelVisible }) => {
-  const [sets, setSets] = React.useState('');
-  const [reps, setReps] = React.useState('');
-  const [type, setType] = React.useState({_id:-1, name: "Select Workout", category: "", __v: -1});
+const EditWorkoutPanel: React.FC<EditWorkoutPanel> = ({ date, index, showPanel, panelVisible, exerciseType, setExerciseType }) => {
 
   useEffect(() => {loadExercises()}, []);
-  console.log(date);
-  console.log(index);
 
   const outerContainer: CSSProperties = {
     position : "fixed",
@@ -40,6 +42,39 @@ const EditWorkoutPanel: React.FC<EditWorkoutPanel> = ({ date, index, showPanel, 
     justifyContent: "center",
     display : panelVisible ? "block" : "none"
   }
+
+  const editExercise = async () => {
+    //setLoading(true);
+    const _userData = localStorage.getItem("user_data");
+    if (!_userData) {
+        alert("User not logged in.");
+        //setLoading(false);
+        return;
+    }
+    const userData = JSON.parse( _userData );
+    const userId = userData.userId;
+
+    try {
+        if (exerciseType.exerciseId._id == -1)
+        {
+            return;
+        }
+
+        var obj = {exercise: {exerciseId: exerciseType.exerciseId._id, sets: exerciseType.sets, reps: exerciseType.reps}};
+        var js = JSON.stringify(obj);
+        const response = await fetch(buildPath(`api/workouts/update/${userId}/${date}/${index}`), {method:'PUT',body:js,headers:{'Content-Type':'application/json'}});
+        const data = await response.json();
+
+        if (data.message == null)
+        {
+            alert("Failed to edit exercise.");
+        }
+        
+    } catch (err) {
+        console.error(err);
+        alert("Failed to edit exercise.");
+    }           
+  };
 
   const addExercise = async () => {
     //setLoading(true);
@@ -53,14 +88,14 @@ const EditWorkoutPanel: React.FC<EditWorkoutPanel> = ({ date, index, showPanel, 
     const userId = userData.userId;
 
     try {
-        if (type._id == -1)
+        if (exerciseType.exerciseId._id == -1)
         {
             return;
         }
 
-        var obj = {exercises: [{exerciseId: type._id, sets: sets, reps: reps}]};
+        var obj = {exercises: [{exerciseId: exerciseType.exerciseId._id, sets: exerciseType.sets, reps: exerciseType.reps}]};
         var js = JSON.stringify(obj);
-        const response = await fetch(buildPath(`api/workouts/${userId}/${date}/add`), {method:'PUT',body:js,headers:{'Content-Type':'application/json'}});
+        const response = await fetch(buildPath(`api/workouts/add/${userId}/${date}`), {method:'PUT',body:js,headers:{'Content-Type':'application/json'}});
         const data = await response.json();
 
         if (data.message == null)
@@ -81,7 +116,14 @@ const EditWorkoutPanel: React.FC<EditWorkoutPanel> = ({ date, index, showPanel, 
     {
         menu.style.display = "none";
     }
-    await addExercise();
+    if (exerciseType._id == -1)
+    {
+      await addExercise();
+    }
+    else
+    {
+      await editExercise();
+    }
     showPanel(false);
   }
 
@@ -92,16 +134,16 @@ const EditWorkoutPanel: React.FC<EditWorkoutPanel> = ({ date, index, showPanel, 
             <h1 style = {header}>Modify Exercise</h1>
             <div>
                 <span style = {text}>Type:</span>
-                <button id="typeButton" onClick={toggleDropdown}>{type.name}</button>
+                <button id="typeButton" onClick={toggleDropdown}>{exerciseType.exerciseId.name}</button>
                 <div id="dropdown" style={dropdown}></div>
             </div>
             <div>
                 <span style = {text}>Sets</span>
-                <input onChange={handleSetSets} type="number"></input>
+                <input id="setsInput" onChange={handleSetSets} type="number" value={exerciseType.sets ? exerciseType.sets : ''}></input>
             </div>
             <div>
                 <span style = {text}>Reps</span>
-                <input onChange={handleSetReps} type="number"></input>
+                <input id="repsInput" onChange={handleSetReps} type="number" value={exerciseType.reps ? exerciseType.reps : ''}></input>
             </div>
             <button onClick={saveChanges}>Save Changes</button>
         </div>
@@ -109,25 +151,41 @@ const EditWorkoutPanel: React.FC<EditWorkoutPanel> = ({ date, index, showPanel, 
     </div>
   );
 
-  function handleSetReps( e: any ) : void
-  {
-    setReps( e.target.value );
+  function handleSetReps(e: any): void {
+    const newReps = Math.max(0, parseInt(e.target.value));
+    setExerciseType(prev => ({
+      ...prev,
+      reps: newReps
+    }));
   }
 
-  function handleSetSets( e: any ) : void
-  {
-    setSets( e.target.value );
+  function handleSetSets(e: any): void {
+    const newSets = Math.max(0, parseInt(e.target.value));
+    setExerciseType(prev => ({
+      ...prev,
+      sets: newSets
+    }));
   }
 
-  function handleSetType(index : any)
-{
-    //Update the type button
-    setType(exercises[index]);
-
-    //Hide the dropdown
+  function handleSetType(index: any) {
+    const setsInput = document.getElementById("setsInput") as HTMLInputElement;
+    const repsInput = document.getElementById("repsInput") as HTMLInputElement;
+  
+    const currentSets = setsInput ? parseInt(setsInput.value) || 0 : 0;
+    const currentReps = repsInput ? parseInt(repsInput.value) || 0 : 0;
+  
+    setExerciseType(prev => ({
+      ...prev,
+      exerciseId: exercises[index],
+      sets: currentSets,
+      reps: currentReps
+    }));
+  
     let dropdown = document.getElementById("dropdown");
-    if (dropdown != null){dropdown.style.display = "none";}
-}
+    if (dropdown != null) {
+      dropdown.style.display = "none";
+    }
+  }
 
 async function loadExercises() : Promise<void>
 {
