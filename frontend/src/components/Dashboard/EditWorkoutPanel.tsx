@@ -40,7 +40,10 @@ const EditWorkoutPanel: React.FC<EditWorkoutPanel> = ({ date, index, showPanel, 
     height : "100%",
     background : "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
-    display : panelVisible ? "block" : "none"
+    display : panelVisible ? "block" : "none",
+    top: 0,
+    left: 0,
+    zIndex: 10
   }
 
   const editExercise = async () => {

@@ -5,10 +5,6 @@ import ConfirmDelete from "./ConfirmDelete";
 
 function LoggedInName()
 {
-    let _ud : any = localStorage.getItem('user_data');
-    let ud = JSON.parse( _ud );
-    let displayName : string = ud.displayName
-
     const [date, setDate] = useState('');
     const [index, setIndex] = useState(0);
     const [panelVisible, showPanel] = useState(false);

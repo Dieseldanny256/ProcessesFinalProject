@@ -92,6 +92,27 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
     }
   };
 
+  const checkOff = async () => {
+    const _userData = localStorage.getItem("user_data");
+    if (!_userData) {
+      alert("User not logged in.");
+      return;
+    }
+    const userData = JSON.parse(_userData);
+    const userId = userData.userId;
+
+    const dateString = getDateString(tempStartDate);
+
+    try {
+      const response = await fetch(buildPath(`api/workouts/${userId}/${dateString}/checkoff`));
+      const data = await response.json();
+      alert(data.message);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to checkoff.");
+    }
+  };
+
   const handleAddClick = (date: Date) => {
     updateDate(getDateString(date));
     updateIndex(-1);
@@ -119,19 +140,20 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
     return 0;
   };
 
-  const handleWheel = (event: React.WheelEvent) => {
+  /*const handleWheel = (event: React.WheelEvent) => {
     if (event.deltaY > 0) {
       setWeekOffset((prev) => prev + 1);
     } else {
       setWeekOffset((prev) => prev - 1);
     }
-  };
+  };*/
 
   const getButtonStyle = (side: "left" | "right"): CSSProperties => ({
     transformOrigin: "center",
     fontFamily: 'microgramma-extended, sans-serif',
     marginTop: "2vh",
-    width: "10vw",
+    marginLeft: side == "right" ? "3vw" : "0vw",
+    marginRight: side == "left" ? "3vw" : "0vw",
     fontSize: "5vw",
     padding: "1vh",
     textAlign: "center",
@@ -146,7 +168,7 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
   });
 
   return (
-    <div style={outerContainer} onWheel={handleWheel}>
+    <div style={outerContainer}>
       <div
         style={{
           left: `${slidePanelPosition.left}px`,
@@ -191,11 +213,25 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
         <table style={table}>
           <thead>
             <tr>
-              {dayNames.map((day, i) => (
+              {dayNames.map((day, i) => {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(cellDate.getDate() + i);
+
+                const isToday = compareDates(new Date(), cellDate) === 0;
+
+                return (
                 <th key={i} style={headerCellStyle}>
-                  {day}
+                  <span>{day}</span>
+                  {isToday && (
+                    <div className="checkbox-wrapper" style={{display: "inline-block", float: "right"}}>
+                    <input className="inp-cbx" id="cbx" type="checkbox" onClick={()=>{}}/>
+                      <label className="cbx" htmlFor="cbx"><span>
+                        <svg width="1.2vw" height="1.2vw" viewBox="0 0 12 12">
+                          <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
+                        </svg></span>
+                      </label></div>)}
                 </th>
-              ))}
+              )})}
             </tr>
           </thead>
           <tbody>
@@ -226,7 +262,6 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                     <div>
                       <strong>{monthAbbreviations[cellDate.getMonth()]} {cellDate.getDate()}</strong>
                     </div>
-
                     <div style={inline}>
                       {dayExercises.map((exercise: any, j: number) => (
                         <div key={j} className="calendarItem">
@@ -243,6 +278,7 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                                 updateIndex(j);
                                 updateDate(getDateString(cellDate));
                                 setIsShown(!isShown);
+                                setExerciseType(weekExcercises[i][j]);
                               }}
                             />
                           </div>
@@ -272,8 +308,7 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
 };
 
 const outerContainer: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
+  display: "block",
   alignItems: "center",
   userSelect: 'none',
 };
@@ -283,6 +318,8 @@ const container: CSSProperties = {
   justifyContent: "center",
   alignItems: "center",
   flexDirection: "row",
+  width: "100%",
+  height: "100%"
 };
 
 const table: CSSProperties = {
@@ -299,7 +336,7 @@ const headerCellStyle: CSSProperties = {
   padding: "10px",
   textAlign: "center",
   fontWeight: "bold",
-  border: '1px solid black',
+  border: '1px solid black'
 };
 
 const month: CSSProperties = {
