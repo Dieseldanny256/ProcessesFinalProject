@@ -568,15 +568,10 @@ exports.setApp = function (app, client) {
                 return res.status(400).json({ error: error });
             }
 
-            if (workout.checkedOff) {
-                error = 'Workout already checked off';
-                return res.status(400).json({ error: error });
-            }
-
             // Mark the workout as checked off
             await workoutsCollection.updateOne(
                 { userId: userId, date: date },
-                { $set: { checkedOff: true } }
+                { $set: { checkedOff: !workout.checkedOff } }
             );
 
             // Calculate stats and powerlevel updates
@@ -594,22 +589,22 @@ exports.setApp = function (app, client) {
                     const category = exerciseData.category.toLowerCase();
                     switch (category) {
                         case 'chest':
-                            stats[0] += total;
+                            stats[0] += total * (workout.checkedOff ? 1 : -1);
                             break;
                         case 'back':
-                            stats[1] += total;
+                            stats[1] += total * (workout.checkedOff ? 1 : -1);
                             break;
                         case 'leg':
-                            stats[2] += total;
+                            stats[2] += total * (workout.checkedOff ? 1 : -1);
                             break;
                         case 'stamina':
-                            stats[3] += total;
+                            stats[3] += total * (workout.checkedOff ? 1 : -1);
                             break;
                         case 'core':
-                            stats[4] += total;
+                            stats[4] += total * (workout.checkedOff ? 1 : -1);
                             break;
                         case 'arm':
-                            stats[5] += total;
+                            stats[5] += total * (workout.checkedOff ? 1 : -1);
                             break;
                         default:
                             break;
@@ -618,7 +613,7 @@ exports.setApp = function (app, client) {
             }
 
             // Update the user's profile
-            const result = await updateProfileStats(client, userId, workout.checkedOff ? 0 : 1, totalReps, stats);
+            const result = await updateProfileStats(client, userId, workout.checkedOff, totalReps, stats);
 
             if (!result.success) {
                 error = result.message;

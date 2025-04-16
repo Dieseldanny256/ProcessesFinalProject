@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   friendRequests: { type: [Number], default: [] },
   friendRequestsSent: { type: [Number], default: [] },
   profile: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile' }
-});
+}, { collection: 'Users' });
 
 // This step is for defining the Profile schema
 const profileSchema = new mongoose.Schema({
@@ -23,7 +23,7 @@ const profileSchema = new mongoose.Schema({
   powerlevel: { type: Number, default: 0 },
   stats: { type: [Number], default: [0, 0, 0, 0, 0, 0] },
   profilePicture: { type: Number, default: 0 }
-});
+}, { collection: 'Profiles' });
 
 // This step is for exporting the User and Profile models
 const User = mongoose.model('User', userSchema);

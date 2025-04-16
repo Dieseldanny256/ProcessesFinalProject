@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useState, useRef } from "react";
+import React, { CSSProperties, useEffect, useState } from "react";
 import dots from "../../assets/dots.png";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -43,12 +43,36 @@ interface CalendarProps
     setExerciseType: (exercise: {exerciseId : {_id:number, name:string, category:string, __v:number}, sets:number, reps:number, _id:number }) => void
 }
 
+interface Exercise {
+  exerciseId: {
+    _id: number;
+    name: string;
+    category: string;
+    __v: number;
+  };
+  sets: number;
+  reps: number;
+  _id: number;
+}
+
+interface ExerciseDayData {
+  exercises: Exercise[],
+  isChecked: boolean
+}
+
 const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisible, showPanel, deletePanelVisible, showDeletePanel, setExerciseType}) => {
   // Hi - Jacob
   // Salutations - Daniel
 
   const[weekOffset, setWeekOffset] = useState(0);
-  const[weekExcercises, setWeekExercises] = useState<any[][]>([[], [], [], [], [], [], []]);
+  const[weekExcercises, setWeekExercises] = useState<ExerciseDayData[]>(
+    [{exercises: [], isChecked: false},
+     {exercises: [], isChecked: false},
+     {exercises: [], isChecked: false},
+     {exercises: [], isChecked: false},
+     {exercises: [], isChecked: false},
+     {exercises: [], isChecked: false},
+     {exercises: [], isChecked: false}]);
   const[startDate, setStartDate] = useState<Date>(getSundayOfWeek(0));
   const[tempStartDate, setTempStartDate] = useState<Date>(getSundayOfWeek(0));
   //const[loading, setLoading] = useState(false);
@@ -57,10 +81,7 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
   const [slidePanelPosition, setSlidePanelPosition] = useState({ left: 0, top: 0 });
 
   const [hoveredButton, setHoveredButton] = useState<"left" | "right" | null>(null);
-  const [isOverScrollable, setIsOverScrollable] = useState(false);
   
-
-
   useEffect(() => {
     const newStartDate = getSundayOfWeek(weekOffset);
     setTempStartDate(newStartDate);
@@ -88,7 +109,14 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
     try {
       const response = await fetch(buildPath(`api/workouts/${userId}/${dateString}/weekExercises`));
       const data = await response.json();
-      setWeekExercises(data.exercises || [[], [], [], [], [], [], []]);
+      setWeekExercises(data.exercises || 
+        [{exercises: [], isChecked: false}, 
+         {exercises: [], isChecked: false}, 
+         {exercises: [], isChecked: false}, 
+         {exercises: [], isChecked: false}, 
+         {exercises: [], isChecked: false},
+         {exercises: [], isChecked: false},
+         {exercises: [], isChecked: false}]);
     } catch (err) {
       console.error(err);
       alert("Failed to fetch exercises.");
@@ -104,12 +132,17 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
     const userData = JSON.parse(_userData);
     const userId = userData.userId;
 
-    const dateString = getDateString(tempStartDate);
+    const dateString = getDateString(new Date());
+    console.log(dateString);
 
     try {
-      const response = await fetch(buildPath(`api/workouts/${userId}/${dateString}/checkoff`));
+      const response = await fetch(buildPath(`api/workouts/${userId}/${dateString}/checkoff`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
       const data = await response.json();
-      alert(data.message);
+      console.log(data?.updatedStats)
+      if (data?.error) {alert(data.error);}
     } catch (err) {
       console.error(err);
       alert("Failed to checkoff.");
@@ -179,7 +212,7 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
           display: "block",
           position: "absolute",
           overflow: "clip",
-          width: "40vw",
+          width: "20vw",
           height: "20vh",
           pointerEvents: isShown ? "auto" : "none",
         }}
@@ -225,13 +258,23 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                 cellDate.setDate(cellDate.getDate() + i);
 
                 const isToday = compareDates(new Date(), cellDate) === 0;
+                const dayChecked = weekExcercises[i]?.isChecked;
 
                 return (
                 <th key={i} style={headerCellStyle}>
                   <span>{day}</span>
                   {isToday && (
                     <div className="checkbox-wrapper" style={{display: "inline-block", float: "right"}}>
-                    <input className="inp-cbx" id="cbx" type="checkbox" onClick={()=>{}}/>
+                    <input className="inp-cbx" id="cbx" onChange={async () => {
+                      const updated = [...weekExcercises];
+                      updated[i] = {
+                        ...updated[i],
+                        isChecked: !updated[i].isChecked
+                      };
+                      setWeekExercises(updated);
+        
+                      await checkOff(); // also call your backend update
+                    }} checked = {dayChecked} type="checkbox"/>
                       <label className="cbx" htmlFor="cbx"><span>
                         <svg width="1.2vw" height="1.2vw" viewBox="0 0 12 12">
                           <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
@@ -251,7 +294,9 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                 const isToday = compareDates(new Date(), cellDate) === 0;
 
                 const cellStyle: React.CSSProperties = {
-                  backgroundColor: isToday
+                  backgroundColor: dayExercises.isChecked && hasPassed
+                    ? "rgb(165, 113, 0)"
+                    : isToday
                     ? "rgb(255, 253, 207)"
                     : hasPassed
                     ? "rgb(155, 155, 155)"
@@ -263,6 +308,11 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                   border: isToday ? "3px solid #FFB202" : "1px solid black",
                 };
                 
+                const calendarItemStyle: React.CSSProperties = {
+                  backgroundColor: dayExercises.isChecked ? "rgb(255, 253, 207)" : " #e2e2e2",
+                  color: dayExercises.isChecked ? "rgb(94, 68, 6)" : " #222222",
+                  border: dayExercises.isChecked ? "2px solid #FFB202" : "2px solid #333333",
+                };
 
                 return (
                   <td key={i} className="calendarCell" style={cellStyle}>
@@ -270,12 +320,12 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                       <strong>{monthAbbreviations[cellDate.getMonth()]} {cellDate.getDate()}</strong>
                     </div>
                     <div style={inline}>
-                      {dayExercises.map((exercise: any, j: number) => (
-                        <div key={j} className="calendarItem">
+                      {dayExercises.exercises.map((exercise: any, j: number) => (
+                        <div key={j} className="calendarItem" style={calendarItemStyle}>
                           <div>
                             <span>{exercise.exerciseId.name} {exercise.reps}x{exercise.sets}</span><br />
                           </div>
-                          <div>
+                          {(!hasPassed && !dayExercises.isChecked) && <div>
                             <img
                               src={dots}
                               style={dotsStyle}
@@ -285,7 +335,7 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                                 updateIndex(j);
                                 updateDate(getDateString(cellDate));
                                 setIsShown(!isShown);
-                                setExerciseType(weekExcercises[i][j]);
+                                setExerciseType(exercise);
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = "scale(1.2)";
@@ -295,12 +345,12 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                                 e.currentTarget.style.transform = "scale(1.0)";
                               }}                              
                             />
-                          </div>
+                          </div>}
                         </div>
                       ))}
                     </div>
 
-                    <button onClick={() => handleAddClick(cellDate)}>+</button>
+                    {(!hasPassed && !dayExercises.isChecked) && <button onClick={() => handleAddClick(cellDate)}>+</button>}
                   </td>
                 );
               })}

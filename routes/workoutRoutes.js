@@ -6,10 +6,10 @@ const moment = require('moment');
 const { updateProfileStats } = require('../utils/updateProfileStats');
 
 // This step is for calculating stats based on sets and reps
-const updateStats = async (userId) => {
+const updateStats = async (userId, date, increase = true) => {
     try {
         // This step is for finding workouts by numeric userId and populating exercises
-        const workouts = await Workout.find({ userId: Number(userId) }).populate('exercises.exerciseId');
+        const workouts = await Workout.find({ userId: Number(userId), date }).populate('exercises.exerciseId');
 
         // This step is for resetting stats before calculating new values
         const stats = { chest: 0, leg: 0, arm: 0, back: 0, stamina: 0, core: 0 };
@@ -20,7 +20,7 @@ const updateStats = async (userId) => {
                 if (ex.exerciseId && ex.exerciseId.category) {
                     const category = ex.exerciseId.category;
                     if (stats.hasOwnProperty(category)) {
-                        stats[category] += ex.sets * ex.reps;
+                        stats[category] += ex.sets * ex.reps * (increase ? 1 : -1);
                     }
                 }
             });
@@ -137,7 +137,7 @@ router.get('/:userId/history', async (req, res) => {
             return res.status(400).json({ error: 'Invalid userId format' });
         }
 
-        const workouts = await Workout.find({ userId: numericUserId });
+        const workouts = await Workout.find({ userId: numericUserId, checkedOff: true });
 
         let streak = 0;
         let previousDate = null;
@@ -180,7 +180,7 @@ router.post('/:userId/:date/checkoff', async (req, res) => {
         workout.checkedOff = !workout.checkedOff;
         await workout.save();
 
-        const updatedStats = await updateStats(numericUserId);
+        const updatedStats = await updateStats(numericUserId, date, workout.checkedOff);
         const powerlevel = Object.values(updatedStats).reduce((a, b) => a + b, 0);
 
         const statsArray = [
@@ -314,12 +314,12 @@ router.get('/:userId/:date/weekExercises', async (req, res) => {
             const workout = await Workout.findOne({ userId: numericUserId, date: dateString }).populate('exercises.exerciseId');
             
             if (!workout) {
-                exercises.push([]);
+                exercises.push({exercises: [], isChecked: false});
                 dateObj.setDate(dateObj.getDate() + 1);
                 continue;
             }
 
-            exercises.push(workout.exercises);
+            exercises.push({exercises: workout.exercises, isChecked: workout.checkedOff});
             dateObj.setDate(dateObj.getDate() + 1);
         }
 

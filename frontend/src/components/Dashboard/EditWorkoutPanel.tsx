@@ -252,11 +252,6 @@ const EditWorkoutPanel: React.FC<EditWorkoutPanelProps> = ({
     width: "100%", top: "100%", left: "0", borderRadius: "8px"
   };
 
-  const dropdownItemStyle: CSSProperties = {
-    padding: "10px", cursor: "pointer",
-    borderBottom: "1px solid #ccc", backgroundColor: "#fff"
-  };
-
   const rowStyle: CSSProperties = {
     color: "black", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", position: "relative"
   };
@@ -285,7 +280,7 @@ const EditWorkoutPanel: React.FC<EditWorkoutPanelProps> = ({
                   {exercises.map((exercise, idx) => (
                     <div
                       key={idx}
-                      style={dropdownItemStyle}
+                      className="dropdownContent"
                       onClick={() => handleSetType(exercise)}
                     >
                       {exercise.name}

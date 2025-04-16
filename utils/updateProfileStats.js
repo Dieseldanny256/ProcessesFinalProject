@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const { Profile } = require('../models/User');
 
 // This step is for updating profile stats using userId (number type)
@@ -27,6 +26,7 @@ async function updateProfileStats(userId, streak, powerlevelToAdd, statsToAdd) {
 
         await profile.save();
 
+        console.log(`Added ${powerlevelToAdd} to powerlevel, it is now ${profile.powerlevel}!`)
         console.log(`✅ Updated profile for userId: ${numericUserId}`);
         return { success: true, message: 'Profile updated successfully.' };
     } catch (error) {
