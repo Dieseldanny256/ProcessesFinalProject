@@ -3,6 +3,7 @@ import { Radar } from 'react-chartjs-2';
 import { Link, useNavigate } from 'react-router-dom';
 import GreyBackground from '../components/Images/GreyBackground'; 
 import logoImage from '../assets/logo.png';
+import flameGif from '../assets/flame.gif';
 
 import profile1 from '../assets/profile1.png';
 import profile2 from '../assets/profile2.png';
@@ -82,6 +83,8 @@ const ProfilePage: React.FC = () => {
   const [selectedPictureIndex, setSelectedPictureIndex] = useState<number | null>(null);
   const [confirmationMessage, setConfirmationMessage] = useState('');
 
+  const [streak, setStreak] = useState<number>(0);
+
   const _ud = localStorage.getItem('user_data');
   
   if (!_ud) {
@@ -117,6 +120,7 @@ const ProfilePage: React.FC = () => {
     setDisplay(res.profile.displayName);
     setStats(res.profile.stats || []);
     setPowerLevel(res.profile.powerlevel);
+    setStreak(res.profile.streak);
   }
 
   async function updateProfilePicture(profilePicture: number): Promise<void> {
@@ -348,6 +352,8 @@ const ProfilePage: React.FC = () => {
     refresh();
   };
 
+  const [hovered, setHovered] = useState(false);
+
   const sendFriendRequest = async (friendUserId: string) => {
     await fetch(buildPath('api/sendFriendRequest'), {
       method: 'POST',
@@ -408,10 +414,24 @@ const ProfilePage: React.FC = () => {
       <GreyBackground />
 
       <div style={leftSection}>
-        <img src={profilePictures[profilePicture]} alt="Profile" style={profileImageStyle} />
-        <button onClick={handleOpenModalPicture} style={editButtonStyle}>
-          Edit
-        </button>
+        <div style={profileImageWrapper}>
+          <img src={profilePictures[profilePicture]} alt="Profile" style={profileImageStyle} />
+            {streak > 0 && (
+              <img src={flameGif} alt="Flame" style={flameGifStyle} />
+            )}
+            {streak >= 0 && (
+              <span style={streakNumberStyle}>{streak}</span>
+            )}
+            <button onClick={handleOpenModalPicture} 
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{ ...editButtonStyle,
+              transition: 'transform 0.2s ease, background-color 0.2s ease',
+              transform: hovered ? 'scale(1.05)' : 'scale(1)',
+            }}>
+              Edit
+            </button>
+          </div>
         <div style={hexagonWrapper}>
           <div style={blackOutline}></div>
           <div style={labelBackground}></div>
@@ -725,6 +745,43 @@ const ProfilePage: React.FC = () => {
       )}
     </div>
   );
+};
+
+const profileImageWrapper: React.CSSProperties = {
+  position: 'relative',
+  width: '30vh',
+  height: '30vh',
+  margin: '0 auto',
+};
+
+const flameGifStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: '-62%',
+  right: '-42%',
+  width: '30vh',
+  height: '20vh',
+  zIndex: 2,
+};
+
+const streakNumberStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: '-15%',
+  left: '92%',
+  transform: 'translateX(-50%)',
+  fontSize: '3vh',
+  fontWeight: 'bold',
+  color: 'white',
+  textShadow: `
+    -2px -2px 0 black,
+      2px -2px 0 black,
+    -2px  2px 0 black,
+      2px  2px 0 black,
+    -2px  0px 0 black,
+      2px  0px 0 black,
+      0px -2px 0 black,
+      0px  2px 0 black
+  `,
+  zIndex: 3,
 };
 
 // pivture modal
@@ -1067,11 +1124,11 @@ const plusButtonStyle: React.CSSProperties = {
 };
 
 const editButtonStyle: React.CSSProperties = {
-  backgroundColor: 'rgb(201, 201, 201)',
+  backgroundColor: 'rgb(204, 204, 204)',
   color: 'rgb(0, 0, 0)',
   letterSpacing: '1px',
   position: 'relative',
-  top: '23%',
+  top: '85%',
   fontSize: '2.2vh',
   paddingLeft: '1vh',
   paddingRight: '1vh',
@@ -1131,7 +1188,7 @@ const profileImageStyle: React.CSSProperties = {
   position: 'absolute',
   borderRadius: '50%',
   objectFit: 'cover',
-  top: '-8%',
+  top: '-18%',
   margin: '0 auto',
   border: '6px solid black',
   left: '50%',
@@ -1141,7 +1198,7 @@ const profileImageStyle: React.CSSProperties = {
 // chart
 const hexagonWrapper: React.CSSProperties = {
   position: 'relative',
-  top: '30%',
+  top: '5%',
   width: '28vh',
   height: '32vh',
   left: '50%',

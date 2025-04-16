@@ -54,16 +54,9 @@ const NavigationBar: React.FC = () => {
 
     let txt = await response.text();
     let res = JSON.parse(txt);
-
+    
     setProfilePicture(res.profile.profilePicture);
   }
-
-  /*
-  <button className="button" style={button} onClick={handleRedirectLogout}>&#60;</button>
-      <span>Dashboard</span>
-      <button className="button" style={button} onClick={handleRedirectLeaderboard}>Leaderboard</button>
-      <button className="button" style={button} onClick={handleRedirectProfile}>Profile</button>
-  */
 
   return (
     <header style={header}>
