@@ -48,7 +48,7 @@ exports.setApp = function (app, client) {
                 displayName,
                 streak: 0,
                 powerlevel: 0,
-                stats: [0, 0, 0, 0, 0], // Initialize stats as an array of numbers
+                stats: [0, 0, 0, 0, 0, 0], // Initialize stats as an array of numbers
                 profilePicture: 0
             };
 
