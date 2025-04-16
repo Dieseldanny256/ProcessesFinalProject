@@ -1,5 +1,6 @@
 import React, { CSSProperties, useEffect, useState } from "react";
 import dots from "../../assets/dots.png";
+import flame from "../../assets/flame.gif";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -82,6 +83,36 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
 
   const [hoveredButton, setHoveredButton] = useState<"left" | "right" | null>(null);
   
+  const [streak, setStreak] = useState<number>(0);
+  
+  // get profile for streak
+  const _ud = localStorage.getItem('user_data');
+  if (!_ud) {console.error('No user data found'); return;}
+  const userData = JSON.parse(_ud);
+
+  let userId = '';
+  userId = userData.userId;
+
+  useEffect(() => {
+      async function getProfile(): Promise<void> {
+        let obj = { userId: Number(userId) };
+        let js = JSON.stringify(obj);
+  
+        const response = await fetch(buildPath('api/getProfile'), {
+          method: 'POST',
+          body: js,
+          headers: { 'Content-Type': 'application/json' },
+        });
+  
+        let txt = await response.text();
+        let res = JSON.parse(txt);
+        
+        setStreak(res.profile.streak);
+      }
+  
+      getProfile();
+    }, [userId]);
+
   useEffect(() => {
     const newStartDate = getSundayOfWeek(weekOffset);
     setTempStartDate(newStartDate);
@@ -176,14 +207,6 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
     return 0;
   };
 
-  /*const handleWheel = (event: React.WheelEvent) => {
-    if (event.deltaY > 0) {
-      setWeekOffset((prev) => prev + 1);
-    } else {
-      setWeekOffset((prev) => prev - 1);
-    }
-  };*/
-
   const getButtonStyle = (side: "left" | "right"): CSSProperties => ({
     transformOrigin: "center",
     fontFamily: 'microgramma-extended, sans-serif',
@@ -240,7 +263,7 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
       </div>
 
       <h1 style={month}>{monthNames[startDate.getMonth()]} {startDate.getFullYear()}</h1>
-      <div style={{ ...container, overflow: "hidden" }}>
+      <div style={{ ...container, overflow: "visible" }}>
         <button
           style={getButtonStyle("left")}
           onClick={() => setWeekOffset((prev) => prev - 1)}
@@ -316,9 +339,21 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
 
                 return (
                   <td key={i} className="calendarCell" style={cellStyle}>
+                    {isToday && (
+                      <div style={flameHolder}>
+                        {streak > 0 && (
+                          <img src={flame} alt="Flame" style={flameGifStyle} />
+                        )}
+                        {streak > 0 && (
+                          <span style={streakNumberStyle}>{streak}</span>
+                        )}
+                        
+                      </div>
+                    )}
                     <div>
                       <strong>{monthAbbreviations[cellDate.getMonth()]} {cellDate.getDate()}</strong>
                     </div>
+
                     <div style={inline}>
                       {dayExercises.exercises.map((exercise: any, j: number) => (
                         <div key={j} className="calendarItem" style={calendarItemStyle}>
@@ -339,11 +374,10 @@ const Calendar: React.FC<CalendarProps> = ({updateDate, updateIndex, panelVisibl
                               }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = "scale(1.2)";
-
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.transform = "scale(1.0)";
-                              }}                              
+                              }}
                             />
                           </div>}
                         </div>
@@ -410,6 +444,9 @@ const month: CSSProperties = {
   fontWeight: "700",
   fontStyle: "normal",
   fontSize: "3vw",
+  zIndex: 20,
+  position: 'relative',
+  textShadow: '3px 3px 3px black',
 };
 
 const dotsStyle: CSSProperties = {
@@ -428,5 +465,41 @@ const inline: CSSProperties = {
   overflowY: "auto",
   scrollbarWidth: "thin",
 };
+
+const flameHolder: React.CSSProperties = {
+  position: 'relative',
+  bottom: '12%',
+  right: '50%',
+};
+
+const flameGifStyle: React.CSSProperties = {
+  position: 'absolute',
+  bottom: '0%',
+  left: '47%',
+  width: '150px',
+  transform: 'translateX(-50%)',
+  height: '150px',
+};
+
+const streakNumberStyle: React.CSSProperties = {
+  position: 'absolute',
+  bottom: '10px',
+  transform: 'translateX(-50%)',
+  fontSize: '20px',
+  fontWeight: 'bold',
+  color: 'white',
+  textShadow: `
+  -2px -2px 0 black,
+   2px -2px 0 black,
+  -2px  2px 0 black,
+   2px  2px 0 black,
+  -2px  0px 0 black,
+   2px  0px 0 black,
+   0px -2px 0 black,
+   0px  2px 0 black
+`,
+  zIndex: 3,
+};
+
 
 export default Calendar;
