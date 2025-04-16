@@ -134,8 +134,8 @@ const Login: React.FC<LoginProps> = ({setError}) => {
               marginLeft: "-11vw",
               marginBottom: "2vh"
             }}
-          />
-          <a className="link" href="/forgot-password">Forgot Password?</a> 
+          /> <br/>
+          <a className="link" style={{fontSize: "3vh"}} href="/forgot-password">Forgot Password?</a> 
       </div>
     </>
   );

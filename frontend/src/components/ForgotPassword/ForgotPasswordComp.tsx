@@ -29,7 +29,7 @@ const ForgotPassword: React.FC<LoginProps> = ({setError, setMessage}) => {
   {
     if (process.env.NODE_ENV != 'development')
     {
-    return 'http://' + app_name + ':5000/' + route;
+    return 'http://' + app_name + '/' + route;
     }
     else
     {
