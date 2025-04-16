@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 
-const Register: React.FC = () => {
+interface RegisterProps {
+  disabled: boolean,
+  password: string,
+  setPassword: (password: string) => void,
+  setError: (error: string) => void
+}
+
+const Register: React.FC<RegisterProps> = ({disabled, password, setPassword, setError}) => {
   // Hooks
   const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
 
   const app_name = 'powerleveling.xyz';
   function buildPath(route:string) : string
@@ -36,13 +41,13 @@ const Register: React.FC = () => {
 
           if( res.error != "" )
           {
-              setMessage(res.error);
+              setError(res.error);
           }
           else
           {
             var user = res.userDetails;
             localStorage.setItem('user_data', JSON.stringify(user));
-            setMessage('');
+            setError('');
             window.location.href = '/verifyemail';
           }
       }
@@ -131,7 +136,10 @@ const Register: React.FC = () => {
             className='bodyText'
             placeholder="Password"
             value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
+            onChange={(e) => {
+              setPassword(e.target.value);
+              console.log(`Typing password: ${e.target.value}`);
+            }}
             required
             style={{
               width: "60%",
@@ -152,28 +160,21 @@ const Register: React.FC = () => {
             className="button"
             value="SUBMIT"
             onClick={doRegister}
+            disabled={disabled}
             style={{
               width: "50%",
               padding: "2vh",
-              backgroundColor: "#FFB202",
+              backgroundColor: disabled ? " rgb(155, 155, 155)" : "#FFB202",
+              color: disabled ? " #333333" : "black",
               border: ".7vh solid Black",
               borderRadius: "2px",
               cursor: "pointer",
               marginTop: "-2vh",
               marginLeft: "-11vw",
+              transition: "color 0.2s linear, background-color 0.2s linear",
+              marginBottom: "2vh"
             }}
           /> 
-          <span
-            id="loginResult"
-            style={{
-              display: "block",
-              marginTop: "10px",
-              fontWeight: "bold",
-              color: "red"
-            }}
-          >
-            {message}
-          </span>
       </div>
     </>
   );

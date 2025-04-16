@@ -331,3 +331,43 @@
     transform: scale(0.9);
   }
 }
+
+/* Speech bubble with a border */
+
+.bubble {
+  background-color: #eee;
+  border: 2px solid #333;
+  border-radius: 5px;
+  display: inline-block;
+  
+  color: #222;
+  font-family: "purista-web", sans-serif;
+  font-weight: 700;
+  font-size: 1vw;
+  letter-spacing: 1px;
+
+  padding: 12px 24px;
+  position: relative;
+}
+.bubble:after,
+.bubble:before {
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 20px solid #eee;
+  bottom: -20px;
+  content: '';
+  left: 50%;
+  margin-left: -20px;
+  position: absolute;
+}
+
+/* Styling for second triangle (border) */
+
+.bubble:before {
+  border-left: 23px solid transparent;
+  border-right: 23px solid transparent;
+  border-top: 23px solid;
+  border-top-color: inherit; /* Can't be included in the shorthand to work */
+  bottom: -23px;
+  margin-left: -23px;
+}

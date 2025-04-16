@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 //import { useNavigate } from 'react-router-dom';
 
-const Login: React.FC = () => {
+interface LoginProps
+{
+  setError: (error : string) => void
+}
+
+const Login: React.FC<LoginProps> = ({setError}) => {
   // Hooks
-  const [message,setMessage] = useState('');
-  const [loginName,setLoginName] = React.useState('');
-  const [loginPassword,setPassword] = React.useState('');
+  const [loginName,setLoginName] = useState('');
+  const [loginPassword,setPassword] = useState('');
   
   const app_name = 'powerleveling.xyz';
   function buildPath(route:string) : string
@@ -35,13 +39,13 @@ const Login: React.FC = () => {
 
           if( res.error != "" )
           {
-              setMessage('Invalid credentials');
+              setError('Invalid credentials');
           }
           else
           {
               var user = res.userDetails;
               localStorage.setItem('user_data', JSON.stringify(user));
-              setMessage('');
+              setError('');
               //Check user's verification status
               if (user.isVerified) {window.location.href = '/dashboard';}
               else {window.location.href = '/verifyemail';}
@@ -128,20 +132,9 @@ const Login: React.FC = () => {
               cursor: "pointer",
               marginTop: "1vh",
               marginLeft: "-11vw",
+              marginBottom: "2vh"
             }}
           /> 
-
-          <span
-            id="loginResult"
-            style={{
-              display: "block",
-              marginTop: "10px",
-              fontWeight: "bold",
-              color: "red"
-            }}
-          >
-            {message}
-          </span>
       </div>
     </>
   );

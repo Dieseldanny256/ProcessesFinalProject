@@ -1,13 +1,19 @@
-import React, { ReactNode, CSSProperties } from "react";
+import React, { CSSProperties, useState } from "react";
+import SpeechBubble from "./Register/SpeechBubble";
+import LoginBox from "./Login/LoginBox";
+import Login from "./Login/LoginComp";
+import PageTitle from "./Images/PageTitleImg";
 
-interface AngledBoxProps {
-  children: ReactNode;
-}
+const LoginContainer: React.FC = () => {
+  const [error, setError] = useState('');
 
-const LoginContainer: React.FC<AngledBoxProps> = ({ children }) => {
   return (
     <div style={container}>
-        {children}
+      <SpeechBubble password="a&7eS8dwD" setDisabled={()=>{}} error={error}/>
+      <PageTitle />
+      <LoginBox> 
+        <Login setError={setError}/>
+      </LoginBox>
     </div>
   );
 };
