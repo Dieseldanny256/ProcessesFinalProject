@@ -4,6 +4,7 @@ const router = express.Router();
 const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 const { User, Profile } = require('./models/User'); // Ensure this path is correct
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -156,6 +157,81 @@ exports.setApp = function (app, client) {
         res.status(200).json(ret);
     });
     
+    app.post('/api/sendResetLink', async (req, res, next) => {
+        // incoming: login, email
+        // outgoing: error, userId
+
+        try {
+            const { email, login, path } = req.body;
+
+            var error = '';
+            var message = '';
+
+            const user = await User.findOne({email:email, login:login});
+
+            if (!user) {
+                res.status(200).json({ error: 'User not found!' });
+                return;
+            }
+
+            const token = jwt.sign({id: user.userId}, "jwt_secret_key", {expiresIn: "1d"});
+
+            const msg = {
+                to: email,
+                from: 'ch121219@ucf.edu',
+                subject: 'Forgot Password',
+                text: `Click on the link to finish resetting your password!:\n
+                    ${path}reset-password/${user.userId}/${token}`
+            };
+
+            await sgMail.send(msg);
+            message = 'Password reset link successfully sent!';
+            
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { error: error, message: message};
+        res.status(200).json(ret);
+    });
+
+    app.post('/api/resetPassword/:userId/:token', async (req, res, next) => {
+        // incoming: login, email
+        // outgoing: error, userId
+
+        try {
+            const { userId, token} = req.params;
+            const { password } = req.body;
+
+            var error = '';
+            var message = '';
+
+            jwt.verify(token, "jwt_secret_key", (err, decoded) => {
+                if(err) {
+                    return res.json({error: "Token not found!"})
+                } 
+            })
+
+            const user = await User.findOne({ userId: userId });
+
+            if (!user) {
+                res.status(200).json({ error: 'User not found!' });
+                return;
+            }
+            
+            user.password = password;
+            await user.save();
+
+            message = 'Password successfully reset!';
+            
+        } catch (e) {
+            error = e.toString();
+        }
+
+        var ret = { error: error, message: message};
+        res.status(200).json(ret);
+    });
+
     app.post('/api/getProfile', async (req, res, next) => {
         // incoming: userId
         // outgoing: profile, error

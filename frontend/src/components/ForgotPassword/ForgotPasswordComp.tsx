@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 interface LoginProps
 {
   setError: (error : string) => void
+  setMessage: (message : string) => void
 }
 
-const Login: React.FC<LoginProps> = ({setError}) => {
+const ForgotPassword: React.FC<LoginProps> = ({setError, setMessage}) => {
   // Hooks
   const [loginName,setLoginName] = useState('');
-  const [loginPassword,setPassword] = useState('');
+  const [email,setEmail] = useState('');
   
   const app_name = 'powerleveling.xyz';
   function buildPath(route:string) : string
@@ -24,31 +25,39 @@ const Login: React.FC<LoginProps> = ({setError}) => {
     }
   }
 
+  function buildSitePath(route:string) : string
+  {
+    if (process.env.NODE_ENV != 'development')
+    {
+    return 'http://' + app_name + ':5000/' + route;
+    }
+    else
+    {
+    return 'http://localhost:5173/' + route;
+    }
+  }
+
   // Handle Login
-  async function doLogin(event:any) : Promise<void>
+  async function sendResetLink(event:any) : Promise<void>
   {
       event.preventDefault();
-      var obj = {login:loginName,password:loginPassword};
+      var obj = {login:loginName, email:email, path:buildSitePath('')};
       var js = JSON.stringify(obj);
       try
       {
           //Get the API response
-          const response = await fetch(buildPath('api/login'),
+          const response = await fetch(buildPath('api/sendResetLink'),
           {method:'POST',body:js,headers:{'Content-Type':'application/json'}});
           var res = JSON.parse(await response.text());
 
           if( res.error != "" )
           {
-              setError('Invalid credentials');
+              setError('There was no account found with those credentials!');
           }
           else
           {
-              var user = res.userDetails;
-              localStorage.setItem('user_data', JSON.stringify(user));
               setError('');
-              //Check user's verification status
-              if (user.isVerified) {window.location.href = '/dashboard';}
-              else {window.location.href = '/verifyemail';}
+              setMessage('Message sent, bro! When you get it, click the link!');
           }
       }
       catch(error:any)
@@ -63,14 +72,14 @@ const Login: React.FC<LoginProps> = ({setError}) => {
     setLoginName( e.target.value );
   }
 
-  function handleSetPassword( e: any ) : void
+  function handleSetEmail( e: any ) : void
   {
-    setPassword( e.target.value );
+    setEmail( e.target.value );
   }
 
   return (
     <>
-      <div className="headerText">LOGIN</div>
+      <div className="headerText" style={{fontSize: "3vw", marginLeft: "-10vw"}}>FORGOT<br/>PASSWORD?</div>
 
       <div id="loginDiv">
         <br />
@@ -78,7 +87,8 @@ const Login: React.FC<LoginProps> = ({setError}) => {
             type="text"
             id="userName"
             className='bodyText'
-            placeholder="Login"
+            placeholder="Username"
+            autoComplete='false'
             onChange={handleSetLoginName}
             required
 
@@ -96,11 +106,12 @@ const Login: React.FC<LoginProps> = ({setError}) => {
           
         <br />
           <input
-            type="password"
+            type="email"
             id="loginPassword"
             className='bodyText'
-            placeholder="Password"
-            onChange={handleSetPassword}
+            placeholder="Email"
+            autoComplete='false'
+            onChange={handleSetEmail}
             required
 
             style={{
@@ -121,8 +132,8 @@ const Login: React.FC<LoginProps> = ({setError}) => {
             type="submit"
             id="loginButton"
             className="button"
-            value="SUBMIT"
-            onClick={doLogin}
+            value="RESET"
+            onClick={sendResetLink}
             style={{
               width: "50%",
               padding: "2vh",
@@ -134,11 +145,10 @@ const Login: React.FC<LoginProps> = ({setError}) => {
               marginLeft: "-11vw",
               marginBottom: "2vh"
             }}
-          />
-          <a className="link" href="/forgot-password">Forgot Password?</a> 
+          /> 
       </div>
     </>
   );
 }
 
-export default Login;
+export default ForgotPassword;

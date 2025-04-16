@@ -12,7 +12,7 @@ const RegisterContainer: React.FC = () => {
 
   return (
     <div style={container}>
-        <SpeechBubble password={password} setDisabled={setDisabled} error={error}/>
+        <SpeechBubble password={password} setDisabled={setDisabled} error={error} message={''}/>
         <PageTitle />
         <BuffMan />
         <RegisterBox> 

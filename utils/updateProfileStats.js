@@ -26,8 +26,8 @@ async function updateProfileStats(userId, streak, powerlevelToAdd, statsToAdd) {
 
         await profile.save();
 
-        console.log(`Added ${powerlevelToAdd} to powerlevel, it is now ${profile.powerlevel}!`)
-        console.log(`✅ Updated profile for userId: ${numericUserId}`);
+        //console.log(`Added ${powerlevelToAdd} to powerlevel, it is now ${profile.powerlevel}!`)
+        //console.log(`✅ Updated profile for userId: ${numericUserId}`);
         return { success: true, message: 'Profile updated successfully.' };
     } catch (error) {
         console.error('🔥 Error in updateProfileStats:', error);

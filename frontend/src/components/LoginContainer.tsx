@@ -9,7 +9,7 @@ const LoginContainer: React.FC = () => {
 
   return (
     <div style={container}>
-      <SpeechBubble password="a&7eS8dwD" setDisabled={()=>{}} error={error}/>
+      <SpeechBubble password="a&7eS8dwD" setDisabled={()=>{}} error={error} message={''}/>
       <PageTitle />
       <LoginBox> 
         <Login setError={setError}/>

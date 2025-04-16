@@ -371,3 +371,22 @@
   bottom: -23px;
   margin-left: -23px;
 }
+
+.link {
+  color:#004883;
+  text-decoration: underline;
+  font-family: "purista-web", sans-serif;
+  font-weight: 700;
+  font-size: 1vw;
+  letter-spacing: 1px;
+}
+
+.link:hover {
+  color:#008cff;
+  text-decoration: underline;
+}
+
+.link:active {
+  color:#92ceff;
+  text-decoration: underline;
+}

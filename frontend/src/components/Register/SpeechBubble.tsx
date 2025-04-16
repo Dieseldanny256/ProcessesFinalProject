@@ -4,9 +4,10 @@ interface SpeechBubbleProps {
   password: string
   setDisabled: (disabled : boolean) => void
   error: string
+  message: string
 }
 
-const SpeechBubble: React.FC<SpeechBubbleProps> = ({ password, setDisabled, error }) => {
+const SpeechBubble: React.FC<SpeechBubbleProps> = ({ password, setDisabled, error, message }) => {
 
   const [hasCapital, setHasCapital] = useState(true);
   const [isLong, setIsLong] = useState(true);
@@ -48,6 +49,9 @@ const SpeechBubble: React.FC<SpeechBubbleProps> = ({ password, setDisabled, erro
     error != '' ? <div className="bubble" style = {container}>
         <span>Sorry, bro!</span><br/>
         <div style={errorText}>{error}</div>
+    </div> : 
+    message != '' ? <div className="bubble" style = {container}>
+    <span dangerouslySetInnerHTML={{ __html: message }}></span>
     </div> : <div style = {container}></div>
   );
 };

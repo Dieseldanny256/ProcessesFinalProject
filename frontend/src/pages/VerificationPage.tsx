@@ -3,23 +3,29 @@ import BuffMan from '../components/Images/BuffManImg';
 import PageTitle from '../components/Images/PageTitleImg';
 import Verify from '../components/Verify/VerifyComp';
 import VerifyBox from '../components/Verify/VerifyBox';
-import LoginContainer from '../components/LoginContainer';
+import { CSSProperties } from 'react';
 
 const VerifyPage = () =>
 {
     return(
         <div>
         <BackGround>
-          <LoginContainer>
+          <div style={container}>
             <PageTitle />
             <VerifyBox> 
               <Verify />
             </VerifyBox>
             <BuffMan />
-          </LoginContainer>
+          </div>
         </BackGround>
       </div>
     );
+}
+
+const container: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
 }
 
 export default VerifyPage;
